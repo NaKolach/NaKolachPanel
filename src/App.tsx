@@ -1,8 +1,8 @@
 import { useState } from 'react'
-import AuthPage from "./components/AuthPage";
-import MapComponent from './components/MapComponent';
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
+import { MapContainer, TileLayer, Marker, Circle } from "react-leaflet"
+import L from "leaflet"
+import AuthPage from "./components/login/AuthPage";
+import MapComponent from './components/map/MapComponent';
 import './App.css'
 
 function App() {
@@ -32,12 +32,7 @@ function App() {
             <MapComponent initialZoom={10} />
           </div>
           <div>
-            <a href="https://vite.dev" target="_blank">
-              <img src={viteLogo} className="logo" alt="Vite logo" />
-            </a>
-            <a href="https://react.dev" target="_blank">
-              <img src={reactLogo} className="logo react" alt="React logo" />
-            </a>
+            
           </div>
           <h1 className="text-xl font-bold underline">
             Projekt GIS
