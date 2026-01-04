@@ -1,16 +1,16 @@
 import { useState } from 'react'
+import { CATEGORIES } from './data/categories'
 import Sidebar from "./components/layout/Sidebar"
 import MapView from "./components/map/MapView"
 import AuthPage from "./components/login/AuthPage"
-import './App.css'
 
 function App() {
   const [radius, setRadius] = useState(10)
-  const [filters, setFilters] = useState({
-    museums: true,
-    cafes: true,
-    cinemas: false,
-  })
+  const [filters, setFilters] = useState(
+  Object.fromEntries(
+    CATEGORIES.map(c => [c.id, true])
+  )
+)
   const [loggedIn, setLoggedIn] = useState(false);
 
   // funkcje debugujące formularze
@@ -30,6 +30,7 @@ function App() {
     //     <AuthPage onLogin={handleLogin} onRegister={handleRegister} />
     //   ) : (//TU WKLEIC STRONE GLOWNA JAK TESTOWAC LOGOWANIE) </>
     //}
+    
     <div className="flex h-screen w-screen overflow-hidden">
       <Sidebar
         radius={radius}

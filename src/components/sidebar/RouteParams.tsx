@@ -1,4 +1,5 @@
-import CategoryFilter from "./CategoryFilter"
+import { CATEGORIES } from '../../data/categories'
+import CategoryFilter from './CategoryFilter'
 
 export default function RouteParams({
   radius,
@@ -8,45 +9,52 @@ export default function RouteParams({
 }: any) {
   return (
     <>
-      <div>
-        <div className="font-semibold mb-2">Parametry Trasy</div>
+      <div className="flex flex-col h-screen ">
+        <div className="font-semibold text-gray-900 dark:text-gray-100">
+          Parametry Trasy
+        </div>
 
-        <label className="text-sm">
-          Promień szukania: <b>{radius} km</b>
+        <label className="text-sm text-gray-700 dark:text-gray-300">
+          Promień szukania:
+          <span className="ml-1 font-medium">{radius} km</span>
         </label>
+
         <input
           type="range"
           min={1}
           max={30}
           value={radius}
           onChange={(e) => onRadiusChange(+e.target.value)}
-          className="w-full mt-2"
+          className="w-full accent-green-600 dark:accent-green-400"
         />
-
-        <CategoryFilter
-          label="Muzea"
-          checked={filters.museums}
-          onChange={() =>
-            onFiltersChange({ ...filters, museums: !filters.museums })
-          }
-        />
-        <CategoryFilter
-          label="Kawiarnie"
-          checked={filters.cafes}
-          onChange={() =>
-            onFiltersChange({ ...filters, cafes: !filters.cafes })
-          }
-        />
-        <CategoryFilter
-          label="Kina"
-          checked={filters.cinemas}
-          onChange={() =>
-            onFiltersChange({ ...filters, cinemas: !filters.cinemas })
-          }
-        />
+        <div className="flex-1 overflow-y-auto rounded-md pr-1">
+          {CATEGORIES.map(cat => (
+            <CategoryFilter
+              key={cat.id}
+              label={cat.label}
+              Icon={cat.Icon}
+              checked={filters[cat.id]}
+              onChange={() =>
+                onFiltersChange({
+                  ...filters,
+                  [cat.id]: !filters[cat.id],
+                })
+              }
+            />
+          ))}
+        </div>
       </div>
 
-      <button className="mt-auto bg-green-600 text-white py-3 rounded-lg font-semibold">
+      <button
+        className="
+          mt-3 w-full
+          bg-green-600 hover:bg-green-700
+          dark:bg-green-500 dark:hover:bg-green-600
+          text-white font-semibold
+          py-3 rounded-lg
+          transition-colors
+        "
+      >
         Szukaj trasy
       </button>
     </>
