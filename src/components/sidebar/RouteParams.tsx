@@ -1,15 +1,24 @@
 import { CATEGORIES } from '../../data/categories'
 import CategoryFilter from './CategoryFilter'
 
+interface RouteParamsProps {
+  radius: number
+  filters: Record<string, boolean>
+  onRadiusChange: (v: number) => void
+  onFiltersChange: (v: Record<string, boolean>) => void
+  onEditCategory: (categoryId: string) => void
+}
+
 export default function RouteParams({
   radius,
   filters,
   onRadiusChange,
   onFiltersChange,
-}: any) {
+  onEditCategory,
+}: RouteParamsProps) {
   return (
     <>
-      <div className="flex flex-col h-screen ">
+      <div className="flex flex-col h-screen">
         <div className="font-semibold text-gray-900 dark:text-gray-100">
           Parametry Trasy
         </div>
@@ -22,11 +31,12 @@ export default function RouteParams({
         <input
           type="range"
           min={1}
-          max={30}
+          max={50}
           value={radius}
           onChange={(e) => onRadiusChange(+e.target.value)}
-          className="w-full accent-green-600 dark:accent-green-400"
+          className="w-full accent-green-600 dark:accent-green-500"
         />
+
         <div className="flex-1 overflow-y-auto rounded-md pr-1">
           {CATEGORIES.map(cat => (
             <CategoryFilter
@@ -40,6 +50,7 @@ export default function RouteParams({
                   [cat.id]: !filters[cat.id],
                 })
               }
+              onEdit={() => onEditCategory(cat.id)}
             />
           ))}
         </div>
@@ -52,7 +63,6 @@ export default function RouteParams({
           dark:bg-green-500 dark:hover:bg-green-600
           text-white font-semibold
           py-3 rounded-lg
-          transition-colors
         "
       >
         Szukaj trasy

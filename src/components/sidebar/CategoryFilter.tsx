@@ -5,6 +5,7 @@ type Props = {
   Icon: ComponentType<{ className?: string }>
   checked: boolean
   onChange: () => void
+  onEdit: () => void
 }
 
 export default function CategoryFilter({
@@ -12,6 +13,7 @@ export default function CategoryFilter({
   Icon,
   checked,
   onChange,
+  onEdit,
 }: Props) {
   return (
     <div
@@ -24,8 +26,8 @@ export default function CategoryFilter({
         rounded-none first:rounded-t-md last:rounded-b-md
       "
     >
-      <label className="flex items-center gap-2 text-sm cursor-pointer">
-        <input
+    <label className="flex items-center gap-2 text-sm cursor-pointer">
+      <input
           type="checkbox"
           checked={checked}
           onChange={onChange}
@@ -42,13 +44,8 @@ export default function CategoryFilter({
       {/* PRAWA STRONA – przycisk menu */}
       <button
         type="button"
-        className="
-          flex items-center justify-center
-          w-6 h-6
-          text-gray-500 dark:text-gray-300
-          hover:bg-gray-200 dark:hover:bg-gray-600
-          rounded-md
-        "
+        onClick={onEdit}
+        className="flex items-center justify-center w-6 h-6 text-gray-800 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600 rounded-md"
       >
         ⋮
       </button>

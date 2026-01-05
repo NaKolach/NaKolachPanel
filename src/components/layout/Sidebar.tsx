@@ -1,19 +1,53 @@
 import UserPanel from "../sidebar/UserPanel"
 import RecentRoutes from "../sidebar/RecentRoutes"
 import RouteParams from "../sidebar/RouteParams"
+import CategoryEditPanel from "../sidebar/CategoryEditPanel"
+import type { User } from "../../data/user"
+interface SidebarProps {
+  user: User
+  onLogout: () => void
+  radius: number
+  filters: Record<string, boolean>
+  onRadiusChange: (v: number) => void
+  onFiltersChange: (v: Record<string, boolean>) => void
 
-export default function Sidebar(props: any) {
+  sidebarMode: {
+    type: 'default'
+  } | {
+    type: 'edit-category'
+    categoryId: string
+  }
+  setSidebarMode: (v: any) => void
+}
+
+export default function Sidebar(props: SidebarProps) {
+  const { sidebarMode, setSidebarMode } = props
+
   return (
-    <aside className="
-    w-[30%] h-full
-    bg-gray-100 dark:bg-gray-800
-    border-r border-gray-200 dark:border-gray-700
-    p-6
-    flex flex-col gap-6
-  ">
-      <UserPanel />
-      <RecentRoutes />
-      <RouteParams {...props} />
+    <aside className="w-[30%] h-full bg-gray-200 dark:bg-gray-800 border-r p-6 flex flex-col">
+      {sidebarMode.type === 'default' && (
+        <>
+          <UserPanel username={props.user.username} onLogout={props.onLogout} />
+          <RecentRoutes />
+          <RouteParams
+            radius={props.radius}
+            filters={props.filters}
+            onRadiusChange={props.onRadiusChange}
+            onFiltersChange={props.onFiltersChange}
+            onEditCategory={(id) =>
+              setSidebarMode({ type: 'edit-category', categoryId: id })
+            }
+          />
+        </>
+      )}
+
+      {sidebarMode.type === 'edit-category' && (
+        <CategoryEditPanel
+          categoryId={sidebarMode.categoryId}
+          onClose={() => setSidebarMode({ type: 'default' })}
+        />
+      )}
     </aside>
   )
 }
+

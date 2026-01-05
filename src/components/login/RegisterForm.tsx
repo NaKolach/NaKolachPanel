@@ -1,93 +1,87 @@
-import { useState } from "react";
-import type { FormEvent } from "react";
+import { useState, type FormEvent } from "react"
 
 interface RegisterFormProps {
-  onSubmit: (data: { email: string; username: string; password: string }) => void;
+  onSubmit: (data: { email: string; username: string; password: string }) => void
 }
 
 const RegisterForm: React.FC<RegisterFormProps> = ({ onSubmit }) => {
-  const [email, setEmail] = useState<string>("");
-  const [username, setUsername] = useState<string>("");
-  const [password, setPassword] = useState<string>("");
-  const [confirmPassword, setConfirmPassword] = useState<string>("");
-  const [error, setError] = useState<string>("");
+  const [email, setEmail] = useState("")
+  const [username, setUsername] = useState("")
+  const [password, setPassword] = useState("")
+  const [confirm, setConfirm] = useState("")
+  const [error, setError] = useState("")
 
   const handleSubmit = (e: FormEvent) => {
-    e.preventDefault();
-    setError("");
+    e.preventDefault()
+    setError("")
 
-    if (!email || !username || !password || !confirmPassword) {
-      setError("Wszystkie pola muszą być wypełnione.");
-      return;
+    if (!email || !username || !password || !confirm) {
+      setError("Wszystkie pola są wymagane.")
+      return
     }
 
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      setError("Nieprawidłowy format email.");
-      return;
-    }
-
-    if (password !== confirmPassword) {
-      setError("Hasła nie są zgodne.");
-      return;
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      setError("Nieprawidłowy email.")
+      return
     }
 
     if (password.length < 6) {
-      setError("Hasło musi mieć co najmniej 6 znaków.");
-      return;
+      setError("Hasło musi mieć minimum 6 znaków.")
+      return
     }
 
-    onSubmit({ email, username, password });
-  };
+    if (password !== confirm) {
+      setError("Hasła nie są zgodne.")
+      return
+    }
+
+    onSubmit({ email, username, password })
+  }
 
   return (
-    <form onSubmit={handleSubmit} className="max-w-md mx-auto p-6 bg-black rounded shadow">
-      <h2 className="text-2xl font-bold mb-4">Rejestracja</h2>
-      {error && <p className="text-red-500 mb-2">{error}</p>}
-      <div className="mb-4">
-        <label className="block mb-1">Email</label>
-        <input
-          type="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          className="w-full border rounded px-3 py-2"
-        />
-      </div>
-      <div className="mb-4">
-        <label className="block mb-1">Nazwa użytkownika</label>
-        <input
-          type="text"
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
-          className="w-full border rounded px-3 py-2"
-        />
-      </div>
-      <div className="mb-4">
-        <label className="block mb-1">Hasło</label>
-        <input
-          type="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          className="w-full border rounded px-3 py-2"
-        />
-      </div>
-      <div className="mb-4">
-        <label className="block mb-1">Potwierdź hasło</label>
-        <input
-          type="password"
-          value={confirmPassword}
-          onChange={(e) => setConfirmPassword(e.target.value)}
-          className="w-full border rounded px-3 py-2"
-        />
-      </div>
+    <form onSubmit={handleSubmit} className="space-y-4">
+      {error && <div className="text-sm text-red-600">{error}</div>}
+
+      <input
+        type="email"
+        placeholder="Email"
+        value={email}
+        onChange={e => setEmail(e.target.value)}
+        className="w-full border rounded-md px-4 py-2 focus:ring-2 focus:ring-emerald-500"
+      />
+
+      <input
+        type="text"
+        placeholder="Nazwa użytkownika"
+        value={username}
+        onChange={e => setUsername(e.target.value)}
+        className="w-full border rounded-md px-4 py-2 focus:ring-2 focus:ring-emerald-500"
+      />
+
+      <input
+        type="password"
+        placeholder="Hasło"
+        value={password}
+        onChange={e => setPassword(e.target.value)}
+        className="w-full border rounded-md px-4 py-2 focus:ring-2 focus:ring-emerald-500"
+      />
+
+      <input
+        type="password"
+        placeholder="Powtórz hasło"
+        value={confirm}
+        onChange={e => setConfirm(e.target.value)}
+        className="w-full border rounded-md px-4 py-2 focus:ring-2 focus:ring-emerald-500"
+      />
+
       <button
         type="submit"
-        className="w-full bg-green-600 text-white py-2 rounded hover:bg-green-700 transition"
+        className="w-full bg-emerald-600 text-white py-2 rounded-md font-medium hover:bg-emerald-700"
       >
         Zarejestruj się
       </button>
     </form>
-  );
-};
+  )
+}
 
-export default RegisterForm;
+export default RegisterForm
