@@ -21,6 +21,7 @@ interface SidebarProps {
 
   categories: Category[]
   onSaveCategoryColor: (id: string, color: PinColorKey) => void
+  onSearchRoute: () => Promise<void> 
 }
 
 
@@ -41,6 +42,7 @@ export default function Sidebar(props: SidebarProps) {
             onEditCategory={(id) =>
               setSidebarMode({ type: 'edit-category', categoryId: id })
             }
+            onSearchRoute={props.onSearchRoute}
           />
         </>
       )}

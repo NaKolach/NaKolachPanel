@@ -40,7 +40,7 @@ export const CATEGORIES: Category[] = [
     pinColor: 'orange',
   },
   {
-    id: 'camping',
+    id: 'camp_site',
     label: 'Campingi',
     Icon: CampingIcon,
     iconUrl: campingUrl,
@@ -68,7 +68,7 @@ export const CATEGORIES: Category[] = [
     pinColor: 'sky',
   },
   {
-    id: 'shop',
+    id: 'supermarket',
     label: 'Sklepy',
     Icon: ShopIcon,
     iconUrl: shopUrl,
@@ -82,7 +82,7 @@ export const CATEGORIES: Category[] = [
     pinColor: 'purple',
   },
   {
-    id: 'theater',
+    id: 'theatre',
     label: 'Teatry',
     Icon: TheaterIcon,
     iconUrl: theaterUrl,

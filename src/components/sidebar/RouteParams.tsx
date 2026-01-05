@@ -7,6 +7,7 @@ interface RouteParamsProps {
   onRadiusChange: (v: number) => void
   onFiltersChange: (v: Record<string, boolean>) => void
   onEditCategory: (categoryId: string) => void
+  onSearchRoute: () => void
 }
 
 export default function RouteParams({
@@ -15,6 +16,7 @@ export default function RouteParams({
   onRadiusChange,
   onFiltersChange,
   onEditCategory,
+  onSearchRoute,
 }: RouteParamsProps) {
   return (
     <>
@@ -57,6 +59,7 @@ export default function RouteParams({
       </div>
 
       <button
+        onClick={onSearchRoute}
         className="
           mt-3 w-full
           bg-green-600 hover:bg-green-700

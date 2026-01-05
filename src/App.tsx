@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { CATEGORIES } from './data/categories'
 import Sidebar from "./components/layout/Sidebar"
 import MapView from "./components/map/MapView"
@@ -21,8 +21,11 @@ function App() {
   const [sidebarMode, setSidebarMode] = useState<SidebarMode>({
     type: 'default',
   })
-  
+
+  type LatLng = { lat: number; lng: number }
+
   const [user, setUser] = useState<User | null>(null)
+  const [userLocation, setUserLocation] = useState<LatLng | null>(null)
   const [categories, setCategories] = useState<Category[]>(CATEGORIES)
 
   //DEV HANDLER LOGINU 
@@ -40,6 +43,7 @@ function App() {
       )
     )
   }
+
   //HANDLER LOGINU DOCELOWY
   // const handleLogin = async (data: { email: string; password: string }) => {
   //   const response = await fetch("/api/login", {
@@ -58,6 +62,19 @@ function App() {
   //   setUser(result)
   // }
 
+  useEffect(() => {
+    navigator.geolocation.getCurrentPosition(
+      pos => {
+        setUserLocation({
+          lat: pos.coords.latitude,
+          lng: pos.coords.longitude,
+        })
+      },
+      () => {
+        setUserLocation(null)
+      }
+    )
+  }, [])
 
   const handleRegister = async (data: {
       email: string
@@ -70,6 +87,21 @@ function App() {
       username: data.username,
       routes: [],
     })
+  }
+  const handleSearchRoute = async () => {
+    if (!userLocation) return
+
+    const params = new URLSearchParams()
+
+    Object.entries(filters)
+      .filter(([, v]) => v)
+      .forEach(([id]) => params.append("types", id))
+
+    params.append("lat", userLocation.lat.toString())
+    params.append("lon", userLocation.lng.toString())
+    params.append("radius", (radius * 1000).toString())
+
+    await fetch(`http://nakolach.com/api/Places?${params.toString()}`)
   }
 
   return (
@@ -89,12 +121,14 @@ function App() {
           setSidebarMode={setSidebarMode}
           categories={categories}
           onSaveCategoryColor={updateCategoryColor}
+          onSearchRoute={handleSearchRoute}
         />
 
         <MapView
           radius={radius}
           filters={filters}
           categories={categories}
+          userLocation={userLocation}
         />
       </div>) 
       }
