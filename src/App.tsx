@@ -4,6 +4,8 @@ import Sidebar from "./components/layout/Sidebar"
 import MapView from "./components/map/MapView"
 import AuthPage from "./components/login/AuthPage"
 import type { User } from "./data/user"
+import type { Category } from './data/category'
+import type { PinColorKey } from './data/pinColors'
 
 function App() {
   const [radius, setRadius] = useState(10)
@@ -21,15 +23,23 @@ function App() {
   })
   
   const [user, setUser] = useState<User | null>(null)
+  const [categories, setCategories] = useState<Category[]>(CATEGORIES)
 
   //DEV HANDLER LOGINU 
   const handleLogin = async (data: { email: string; password: string }) => {
-  setUser({
-    email: data.email,
-    username: "DevUser",
-    routes: [],
-  })
-}
+    setUser({
+      email: data.email,
+      username: "DevUser",
+      routes: [],
+    })
+  }
+  const updateCategoryColor = (id: string, color: PinColorKey) => {
+    setCategories(prev =>
+      prev.map(c =>
+        c.id === id ? { ...c, pinColor: color } : c
+      )
+    )
+  }
   //HANDLER LOGINU DOCELOWY
   // const handleLogin = async (data: { email: string; password: string }) => {
   //   const response = await fetch("/api/login", {
@@ -77,8 +87,15 @@ function App() {
           onFiltersChange={setFilters}
           sidebarMode={sidebarMode}
           setSidebarMode={setSidebarMode}
+          categories={categories}
+          onSaveCategoryColor={updateCategoryColor}
         />
-        <MapView radius={radius} filters={filters} />
+
+        <MapView
+          radius={radius}
+          filters={filters}
+          categories={categories}
+        />
       </div>) 
       }
     </>

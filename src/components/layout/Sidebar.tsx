@@ -3,6 +3,8 @@ import RecentRoutes from "../sidebar/RecentRoutes"
 import RouteParams from "../sidebar/RouteParams"
 import CategoryEditPanel from "../sidebar/CategoryEditPanel"
 import type { User } from "../../data/user"
+import type { Category } from '../../data/category'
+import type { PinColorKey } from '../../data/pinColors'
 interface SidebarProps {
   user: User
   onLogout: () => void
@@ -11,14 +13,16 @@ interface SidebarProps {
   onRadiusChange: (v: number) => void
   onFiltersChange: (v: Record<string, boolean>) => void
 
-  sidebarMode: {
-    type: 'default'
-  } | {
-    type: 'edit-category'
-    categoryId: string
-  }
+  sidebarMode:
+    | { type: 'default' }
+    | { type: 'edit-category'; categoryId: string }
+
   setSidebarMode: (v: any) => void
+
+  categories: Category[]
+  onSaveCategoryColor: (id: string, color: PinColorKey) => void
 }
+
 
 export default function Sidebar(props: SidebarProps) {
   const { sidebarMode, setSidebarMode } = props
@@ -43,7 +47,10 @@ export default function Sidebar(props: SidebarProps) {
 
       {sidebarMode.type === 'edit-category' && (
         <CategoryEditPanel
-          categoryId={sidebarMode.categoryId}
+          category={
+            props.categories.find(c => c.id === sidebarMode.categoryId)!
+          }
+          onSave={props.onSaveCategoryColor}
           onClose={() => setSidebarMode({ type: 'default' })}
         />
       )}
