@@ -28,7 +28,7 @@ export default function Sidebar(props: SidebarProps) {
   const { sidebarMode, setSidebarMode } = props
 
   return (
-    <aside className="w-[30%] h-full bg-gray-200 dark:bg-gray-800 border-r p-6 flex flex-col">
+    <aside className="w-[30%] max-w-[350px] h-full bg-gray-200 dark:bg-gray-800 border-r p-6 flex flex-col">
       {sidebarMode.type === 'default' && (
         <>
           <UserPanel username={props.user.username} onLogout={props.onLogout} />

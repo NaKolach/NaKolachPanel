@@ -16,7 +16,7 @@ export default function MapView({
   categories: Category[]
 }) {
   return (
-    <main className="w-[70%] h-full">
+    <main className="flex-1 h-full">
       <MapContainer center={center} zoom={12} className="h-full w-full">
         <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
         <UserLocation center={center} />

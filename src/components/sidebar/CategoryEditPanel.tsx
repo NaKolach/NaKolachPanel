@@ -21,10 +21,19 @@ export default function CategoryEditPanel({
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex items-center gap-3">
-        <button onClick={onClose}>←</button>
-        <h2>Edycja markera: {category.label}</h2>
-      </div>
+        <div className="flex items-center gap-3">
+            <button
+                onClick={onClose}
+                className="text-xl font-semibold text-gray-800 dark:text-gray-200 hover:opacity-80"
+            >
+                ←
+            </button>
+
+            <h2 className="text-base font-semibold text-gray-800 dark:text-gray-200">
+                Edycja markera: {category.label}
+            </h2>
+        </div>
+
 
       <div className={`${active.tw} rounded-xl p-6 flex justify-center`}>
         <category.Icon className="w-20 h-20 text-white" />
