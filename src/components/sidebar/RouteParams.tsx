@@ -1,21 +1,22 @@
 import { CATEGORIES } from '../../data/categories'
 import CategoryFilter from './CategoryFilter'
 
-interface RouteParamsProps {
+type RouteParamsProps = {
   radius: number
   filters: Record<string, boolean>
   onRadiusChange: (v: number) => void
-  onFiltersChange: (v: Record<string, boolean>) => void
-  onEditCategory: (categoryId: string) => void
-  onSearchRoute: () => void
+  onToggleCategory: (id: string) => void
+  onEditCategory: (id: string) => void
+  onSearchRoute: () => Promise<void>
 }
+
 
 export default function RouteParams({
   radius,
   filters,
   onRadiusChange,
-  onFiltersChange,
   onEditCategory,
+  onToggleCategory,
   onSearchRoute,
 }: RouteParamsProps) {
   return (
@@ -46,12 +47,7 @@ export default function RouteParams({
               label={cat.label}
               Icon={cat.Icon}
               checked={filters[cat.id]}
-              onChange={() =>
-                onFiltersChange({
-                  ...filters,
-                  [cat.id]: !filters[cat.id],
-                })
-              }
+              onChange={() => onToggleCategory(cat.id)}
               onEdit={() => onEditCategory(cat.id)}
             />
           ))}

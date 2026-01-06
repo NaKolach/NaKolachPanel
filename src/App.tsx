@@ -6,12 +6,13 @@ import AuthPage from "./components/login/AuthPage"
 import type { User } from "./data/user"
 import type { Category } from './data/category'
 import type { PinColorKey } from './data/pinColors'
+import type { BackendPlace } from "./data/backendPlace"
 
 function App() {
   const [radius, setRadius] = useState(10)
   const [filters, setFilters] = useState(
     Object.fromEntries(
-      CATEGORIES.map(c => [c.id, true])
+      CATEGORIES.map(c => [c.id, false])
     )
   ) 
 
@@ -23,15 +24,6 @@ function App() {
   })
 
   type LatLng = { lat: number; lng: number }
-
-  type BackendPlace = {
-    id: number
-    lat?: number
-    lon?: number
-    latitude?: number
-    longitude?: number
-    tags: Record<string, string>
-  }
 
   const [places, setPlaces] = useState<BackendPlace[]>([])
 
@@ -102,6 +94,40 @@ function App() {
       routes: [],
     })
   }
+
+  const fetchCategory = async (categoryId: string) => {
+    if (!userLocation) return
+
+    const params = new URLSearchParams()
+    params.append("types", categoryId)
+    params.append("lat", userLocation.lat.toString())
+    params.append("lon", userLocation.lng.toString())
+    params.append("radius", (radius * 1000).toString())
+
+    const res = await fetch(`http://nakolach.com/api/Places?${params}`)
+    const data: BackendPlace[] = await res.json()
+
+    setPlaces(prev => [
+      ...prev.filter(p => p.categoryId !== categoryId),
+      ...data.map(p => ({ ...p, categoryId }))
+    ])
+  }
+
+  const removeCategoryPlaces = (categoryId: string) => {
+    setPlaces(prev => prev.filter(p => p.categoryId !== categoryId))
+  }
+
+  const toggleCategory = async (id: string) => {
+    const next = !filters[id]
+    setFilters(prev => ({ ...prev, [id]: next }))
+
+    if (next) {
+      await fetchCategory(id)
+    } else {
+      removeCategoryPlaces(id)
+    }
+  }
+
   const handleSearchRoute = async () => {
     if (!userLocation) return
 
@@ -139,7 +165,7 @@ function App() {
           radius={radius}
           filters={filters}
           onRadiusChange={setRadius}
-          onFiltersChange={setFilters}
+          onToggleCategory={toggleCategory}
           sidebarMode={sidebarMode}
           setSidebarMode={setSidebarMode}
           categories={categories}

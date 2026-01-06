@@ -1,19 +1,12 @@
-import { Marker } from 'react-leaflet'
+import { Marker, Popup } from 'react-leaflet'
 import L from 'leaflet'
 import type { Category } from '../../data/category'
 import { PIN_COLORS } from '../../data/pinColors'
+import type { BackendPlace } from "../../data/backendPlace"
 
-type BackendPlace = {
-  id: number
-  lat?: number
-  lon?: number
-  latitude?: number
-  longitude?: number
-  center?: {
-    lat: number
-    lon: number
-  }
-  tags: Record<string, string>
+type Props = {
+  places: BackendPlace[]
+  categories: Category[]
 }
 
 const makeIcon = (cat: Category) =>
@@ -71,10 +64,32 @@ export default function PlaceMarkers({
 
         return (
           <Marker
-            key={place.id}
+            key={`${place.categoryId}-${place.id}`}
             position={[lat, lon]}
             icon={makeIcon(cat)}
-          />
+          >
+            <Popup>
+              <div className="text-sm space-y-1">
+                <div>
+                  <strong>Kategoria:</strong>{" "}
+                  {cat?.label ?? place.categoryId}
+                </div>
+
+                <div>
+                  <strong>Nazwa:</strong>{" "}
+                  {place.tags?.name ?? "Brak nazwy"}
+                </div>
+
+                <div>
+                  <strong>Lat:</strong> {lat.toFixed(6)}
+                </div>
+
+                <div>
+                  <strong>Lng:</strong> {lon.toFixed(6)}
+                </div>
+              </div>
+            </Popup>
+          </Marker>
         )
       })}
     </>

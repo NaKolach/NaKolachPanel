@@ -3,19 +3,11 @@ import UserLocation from "../map/UserLocation"
 import RadiusCircle from "../map/RadiusCircle"
 import PlaceMarkers from "../map/PlaceMarkers"
 import type { Category } from "../../data/category"
+import type { BackendPlace } from "../../data/backendPlace"
 
 type LatLng = { lat: number; lng: number }
 
 const DEFAULT_CENTER: [number, number] = [54.3520, 18.6466]
-
-type BackendPlace = {
-  id: number
-  lat?: number
-  lon?: number
-  latitude?: number
-  longitude?: number
-  tags: Record<string, string>
-}
 
 export default function MapView({
   radius,
