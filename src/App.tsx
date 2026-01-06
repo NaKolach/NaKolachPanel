@@ -100,11 +100,13 @@ function App() {
 
     const params = new URLSearchParams()
     params.append("types", categoryId)
-    params.append("lat", userLocation.lat.toString())
-    params.append("lon", userLocation.lng.toString())
+    params.append("latitude", userLocation.lat.toString())
+    params.append("longitude", userLocation.lng.toString())
     params.append("radius", (radius * 1000).toString())
 
+    //const res = await fetch(`http://nakolach.com/api/Places?${params}`)
     const res = await fetch(`http://nakolach.com/api/Places?${params}`)
+
     const data: BackendPlace[] = await res.json()
 
     setPlaces(prev => [
@@ -137,8 +139,8 @@ function App() {
       .filter(([, v]) => v)
       .forEach(([id]) => params.append("types", id))
 
-    params.append("lat", userLocation.lat.toString())
-    params.append("lon", userLocation.lng.toString())
+    params.append("latitude", userLocation.lat.toString())
+    params.append("longitude", userLocation.lng.toString())
     params.append("radius", (radius * 1000).toString())
 
 
