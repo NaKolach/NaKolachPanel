@@ -6,7 +6,7 @@ import type { Category } from "../../data/category"
 
 type LatLng = { lat: number; lng: number }
 
-const DEFAULT_CENTER: [number, number] = [52.2297, 21.0122]
+const DEFAULT_CENTER: [number, number] = [54.3520, 18.6466]
 
 type BackendPlace = {
   id: number

@@ -83,8 +83,8 @@ function App() {
       },
       () => {
         setUserLocation({
-          lat: 52.2297,
-          lng: 21.0122,
+          lat: 54.3520,
+          lng: 18.6466,
         })
       }
     )

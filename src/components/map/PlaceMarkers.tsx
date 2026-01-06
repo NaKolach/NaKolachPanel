@@ -9,6 +9,10 @@ type BackendPlace = {
   lon?: number
   latitude?: number
   longitude?: number
+  center?: {
+    lat: number
+    lon: number
+  }
   tags: Record<string, string>
 }
 
@@ -48,15 +52,16 @@ export default function PlaceMarkers({
   return (
     <>
       {places.map(place => {
-        const lat = place.lat ?? place.latitude
-        const lon = place.lon ?? place.longitude
-        if (!lat || !lon) return null
+        const lat = place.center?.lat ?? place.latitude ?? place.lat
+        const lon = place.center?.lon ?? place.longitude ?? place.lon
+        if (lat == null || lon == null) return null
 
         // mapowanie OSM → Twoja kategoria
         const osmCategory =
           place.tags.amenity ??
           place.tags.tourism ??
-          place.tags.shop
+          place.tags.shop ??
+          (place.tags.leisure === 'park' ? 'park' : null)
 
         if (!osmCategory) return null
         if (!filters[osmCategory]) return null
