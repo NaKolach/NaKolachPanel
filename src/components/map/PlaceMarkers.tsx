@@ -4,11 +4,6 @@ import type { Category } from '../../data/category'
 import { PIN_COLORS } from '../../data/pinColors'
 import type { BackendPlace } from "../../data/backendPlace"
 
-type Props = {
-  places: BackendPlace[]
-  categories: Category[]
-}
-
 const makeIcon = (cat: Category) =>
   L.divIcon({
     className: '',
