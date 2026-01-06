@@ -75,7 +75,7 @@ export const CATEGORIES: Category[] = [
     pinColor: 'indigo',
   },
   {
-    id: 'station',
+    id: 'fuel',
     label: 'Stacje',
     Icon: StationIcon,
     iconUrl: stationUrl,
