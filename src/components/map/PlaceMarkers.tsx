@@ -51,20 +51,21 @@ export default function PlaceMarkers({
 
         // mapowanie OSM → Twoja kategoria
         const osmCategory =
-          place.tags.amenity ??
-          place.tags.tourism ??
-          place.tags.shop ??
-          (place.tags.leisure === 'park' ? 'park' : null)
+          place.tags.leisure === 'park'
+            ? 'park'
+            : place.tags.amenity ??
+              place.tags.tourism ??
+              place.tags.shop ??
+              null
 
         if (!osmCategory) return null
-        if (!filters[osmCategory]) return null
 
         const cat = categories.find(c => c.id === osmCategory)
         if (!cat) return null
 
         return (
           <Marker
-            key={`${place.categoryId}-${place.id}`}
+            key={`${osmCategory}-${place.id}`}
             position={[lat, lon]}
             icon={makeIcon(cat)}
           >
