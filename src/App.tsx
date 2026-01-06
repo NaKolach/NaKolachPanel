@@ -24,6 +24,17 @@ function App() {
 
   type LatLng = { lat: number; lng: number }
 
+  type BackendPlace = {
+    id: number
+    lat?: number
+    lon?: number
+    latitude?: number
+    longitude?: number
+    tags: Record<string, string>
+  }
+
+  const [places, setPlaces] = useState<BackendPlace[]>([])
+
   const [user, setUser] = useState<User | null>(null)
   const [userLocation, setUserLocation] = useState<LatLng | null>(null)
   const [categories, setCategories] = useState<Category[]>(CATEGORIES)
@@ -71,7 +82,10 @@ function App() {
         })
       },
       () => {
-        setUserLocation(null)
+        setUserLocation({
+          lat: 52.2297,
+          lng: 21.0122,
+        })
       }
     )
   }, [])
@@ -101,7 +115,16 @@ function App() {
     params.append("lon", userLocation.lng.toString())
     params.append("radius", (radius * 1000).toString())
 
-    await fetch(`http://nakolach.com/api/Places?${params.toString()}`)
+
+    const res = await fetch(`http://nakolach.com/api/Places?${params.toString()}`)
+
+    const responseJson = await res.json()
+    setPlaces(responseJson)
+
+    // console.log("[PLACES] status:", res.status)
+    // console.log("[PLACES] response object:", responseJson)
+    //console.log("[PLACES] response JSON string:", JSON.stringify(responseJson, null, 2))
+
   }
 
   return (
@@ -129,6 +152,7 @@ function App() {
           filters={filters}
           categories={categories}
           userLocation={userLocation}
+          places={places}
         />
       </div>) 
       }

@@ -3,23 +3,14 @@ import L from 'leaflet'
 import type { Category } from '../../data/category'
 import { PIN_COLORS } from '../../data/pinColors'
 
-type Place = {
-  id: string
-  category: string
-  position: [number, number]
+type BackendPlace = {
+  id: number
+  lat?: number
+  lon?: number
+  latitude?: number
+  longitude?: number
+  tags: Record<string, string>
 }
-
-const BASE_POSITION: [number, number] = [52.24, 21.01]
-
-const makePlaces = (categories: Category[]): Place[] =>
-  categories.map((cat, index) => ({
-    id: cat.id,
-    category: cat.id,
-    position: [
-      BASE_POSITION[0] + index * 0.005,
-      BASE_POSITION[1] + index * 0.007,
-    ],
-  }))
 
 const makeIcon = (cat: Category) =>
   L.divIcon({
@@ -46,29 +37,41 @@ const makeIcon = (cat: Category) =>
   })
 
 export default function PlaceMarkers({
+  places,
   filters,
   categories,
 }: {
+  places: BackendPlace[]
   filters: Record<string, boolean>
   categories: Category[]
 }) {
-  const places = makePlaces(categories)
-
   return (
     <>
-      {places
-        .filter(p => filters[p.category])
-        .map(place => {
-          const cat = categories.find(c => c.id === place.category)!
+      {places.map(place => {
+        const lat = place.lat ?? place.latitude
+        const lon = place.lon ?? place.longitude
+        if (!lat || !lon) return null
 
-          return (
-            <Marker
-              key={`${cat.id}-${cat.pinColor}`}
-              position={place.position}
-              icon={makeIcon(cat)}
-            />
-          )
-        })}
+        // mapowanie OSM → Twoja kategoria
+        const osmCategory =
+          place.tags.amenity ??
+          place.tags.tourism ??
+          place.tags.shop
+
+        if (!osmCategory) return null
+        if (!filters[osmCategory]) return null
+
+        const cat = categories.find(c => c.id === osmCategory)
+        if (!cat) return null
+
+        return (
+          <Marker
+            key={place.id}
+            position={[lat, lon]}
+            icon={makeIcon(cat)}
+          />
+        )
+      })}
     </>
   )
 }

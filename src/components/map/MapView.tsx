@@ -8,16 +8,27 @@ type LatLng = { lat: number; lng: number }
 
 const DEFAULT_CENTER: [number, number] = [52.2297, 21.0122]
 
+type BackendPlace = {
+  id: number
+  lat?: number
+  lon?: number
+  latitude?: number
+  longitude?: number
+  tags: Record<string, string>
+}
+
 export default function MapView({
   radius,
   filters,
   categories,
   userLocation,
+  places,
 }: {
   radius: number
   filters: Record<string, boolean>
   categories: Category[]
   userLocation: LatLng | null
+  places: BackendPlace[]
 }) {
   const center: [number, number] = userLocation
     ? [userLocation.lat, userLocation.lng]
@@ -29,8 +40,12 @@ export default function MapView({
         <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
         <UserLocation center={center} />
         <RadiusCircle center={center} radius={radius} />
-        <PlaceMarkers filters={filters} categories={categories} />
-      </MapContainer>
+        <PlaceMarkers
+          places={places}
+          filters={filters}
+          categories={categories}
+        />      
+        </MapContainer>
     </main>
   )
 }
