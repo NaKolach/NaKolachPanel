@@ -7,11 +7,10 @@ import type { BackendPlace } from "../../data/backendPlace"
 
 type LatLng = { lat: number; lng: number }
 
-const DEFAULT_CENTER: [number, number] = [54.3520, 18.6466]
+const DEFAULT_CENTER: [number, number] = [54.37167, 18.61236]
 
 export default function MapView({
   radius,
-  filters,
   categories,
   userLocation,
   places,
@@ -34,7 +33,6 @@ export default function MapView({
         <RadiusCircle center={center} radius={radius} />
         <PlaceMarkers
           places={places}
-          filters={filters}
           categories={categories}
         />      
         </MapContainer>

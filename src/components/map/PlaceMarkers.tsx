@@ -30,59 +30,32 @@ const makeIcon = (cat: Category) =>
 
 export default function PlaceMarkers({
   places,
-  filters,
   categories,
 }: {
   places: BackendPlace[]
-  filters: Record<string, boolean>
   categories: Category[]
 }) {
   return (
     <>
       {places.map(place => {
-        const lat = place.center?.lat ?? place.latitude ?? place.lat
-        const lon = place.center?.lon ?? place.longitude ?? place.lon
-        if (lat == null || lon == null) return null
+        const { latitude, longitude, category } = place
+        if (latitude == null || longitude == null) return null
 
-        // mapowanie OSM → Twoja kategoria
-        const osmCategory =
-          place.tags.leisure === 'park'
-            ? 'park'
-            : place.tags.amenity ??
-              place.tags.tourism ??
-              place.tags.shop ??
-              null
-
-        if (!osmCategory) return null
-
-        const cat = categories.find(c => c.id === osmCategory)
+        const cat = categories.find(c => c.id === category)
         if (!cat) return null
 
         return (
           <Marker
-            key={`${osmCategory}-${place.id}`}
-            position={[lat, lon]}
+            key={`${category}-${place.id}`}
+            position={[latitude, longitude]}
             icon={makeIcon(cat)}
           >
             <Popup>
               <div className="text-sm space-y-1">
-                <div>
-                  <strong>Kategoria:</strong>{" "}
-                  {cat?.label ?? place.categoryId}
-                </div>
-
-                <div>
-                  <strong>Nazwa:</strong>{" "}
-                  {place.tags?.name ?? "Brak nazwy"}
-                </div>
-
-                <div>
-                  <strong>Lat:</strong> {lat.toFixed(6)}
-                </div>
-
-                <div>
-                  <strong>Lng:</strong> {lon.toFixed(6)}
-                </div>
+                <div><strong>Kategoria:</strong> {cat.label}</div>
+                <div><strong>Nazwa:</strong> {place.name ?? "Brak nazwy"}</div>
+                <div><strong>Lat:</strong> {latitude.toFixed(6)}</div>
+                <div><strong>Lng:</strong> {longitude.toFixed(6)}</div>
               </div>
             </Popup>
           </Marker>

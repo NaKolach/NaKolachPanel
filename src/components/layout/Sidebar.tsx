@@ -17,7 +17,7 @@ interface SidebarProps {
 
   sidebarMode:
     | { type: "default" }
-    | { type: "edit-category"; categoryId: string }
+    | { type: "edit-category"; category: string }
 
   setSidebarMode: (v: any) => void
 
@@ -46,7 +46,7 @@ export default function Sidebar(props: SidebarProps) {
             onRadiusChange={props.onRadiusChange}
             onToggleCategory={props.onToggleCategory}
             onEditCategory={(id) =>
-              setSidebarMode({ type: "edit-category", categoryId: id })
+              setSidebarMode({ type: "edit-category", category: id })
             }
             onSearchRoute={props.onSearchRoute}
           />
@@ -57,7 +57,7 @@ export default function Sidebar(props: SidebarProps) {
         <CategoryEditPanel
           category={
             props.categories.find(
-              (c) => c.id === sidebarMode.categoryId
+              (c) => c.id === sidebarMode.category
             )!
           }
           onSave={props.onSaveCategoryColor}

@@ -18,7 +18,7 @@ function App() {
 
   type SidebarMode =
     | { type: 'default' }
-    | { type: 'edit-category'; categoryId: string }
+    | { type: 'edit-category'; category: string }
   const [sidebarMode, setSidebarMode] = useState<SidebarMode>({
     type: 'default',
   })
@@ -75,8 +75,8 @@ function App() {
       },
       () => {
         setUserLocation({
-          lat: 54.3520,
-          lng: 18.6466,
+          lat: 54.37167,
+          lng: 18.61236,
         })
       }
     )
@@ -95,28 +95,27 @@ function App() {
     })
   }
 
-  const fetchCategory = async (categoryId: string) => {
+  const fetchCategory = async (category: string) => {
     if (!userLocation) return
 
     const params = new URLSearchParams()
-    params.append("types", categoryId)
+    params.append("types", category)
     params.append("latitude", userLocation.lat.toString())
     params.append("longitude", userLocation.lng.toString())
-    params.append("radius", (radius * 1000).toString())
+    params.append("radius", (radius * 1720).toString())
 
-    //const res = await fetch(`http://nakolach.com/api/Places?${params}`)
     const res = await fetch(`http://nakolach.com/api/Places?${params}`)
 
     const data: BackendPlace[] = await res.json()
 
     setPlaces(prev => [
-      ...prev.filter(p => p.categoryId !== categoryId),
-      ...data.map(p => ({ ...p, categoryId }))
+      ...prev.filter(p => p.category !== category),
+      ...data
     ])
   }
 
-  const removeCategoryPlaces = (categoryId: string) => {
-    setPlaces(prev => prev.filter(p => p.categoryId !== categoryId))
+  const removeCategoryPlaces = (category: string) => {
+    setPlaces(prev => prev.filter(p => p.category !== category))
   }
 
   const toggleCategory = async (id: string) => {
@@ -141,7 +140,7 @@ function App() {
 
     params.append("latitude", userLocation.lat.toString())
     params.append("longitude", userLocation.lng.toString())
-    params.append("radius", (radius * 1000).toString())
+    params.append("radius", (radius * 1720).toString())
 
 
     const res = await fetch(`http://nakolach.com/api/Places?${params.toString()}`)

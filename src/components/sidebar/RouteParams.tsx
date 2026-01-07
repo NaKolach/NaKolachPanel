@@ -34,7 +34,7 @@ export default function RouteParams({
         <input
           type="range"
           min={1}
-          max={50}
+          max={15}
           value={radius}
           onChange={(e) => onRadiusChange(+e.target.value)}
           className="w-full accent-green-600 dark:accent-green-500"
