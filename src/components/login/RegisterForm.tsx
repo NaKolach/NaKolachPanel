@@ -1,42 +1,42 @@
-import { useState, type FormEvent } from "react"
+import { useState, type FormEvent } from "react";
 
 interface RegisterFormProps {
-  onSubmit: (data: { email: string; username: string; password: string }) => void
+  onSubmit: (data: { email: string; login: string; password: string }) => void;
 }
 
 const RegisterForm: React.FC<RegisterFormProps> = ({ onSubmit }) => {
-  const [email, setEmail] = useState("")
-  const [username, setUsername] = useState("")
-  const [password, setPassword] = useState("")
-  const [confirm, setConfirm] = useState("")
-  const [error, setError] = useState("")
+  const [email, setEmail] = useState("");
+  const [login, setLogin] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirm, setConfirm] = useState("");
+  const [error, setError] = useState("");
 
   const handleSubmit = (e: FormEvent) => {
-    e.preventDefault()
-    setError("")
+    e.preventDefault();
+    setError("");
 
-    if (!email || !username || !password || !confirm) {
-      setError("Wszystkie pola są wymagane.")
-      return
+    if (!email || !login || !password || !confirm) {
+      setError("Wszystkie pola są wymagane.");
+      return;
     }
 
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      setError("Nieprawidłowy email.")
-      return
+      setError("Nieprawidłowy email.");
+      return;
     }
 
     if (password.length < 6) {
-      setError("Hasło musi mieć minimum 6 znaków.")
-      return
+      setError("Hasło musi mieć minimum 6 znaków.");
+      return;
     }
 
     if (password !== confirm) {
-      setError("Hasła nie są zgodne.")
-      return
+      setError("Hasła nie są zgodne.");
+      return;
     }
 
-    onSubmit({ email, username, password })
-  }
+    onSubmit({ email, login, password });
+  };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
@@ -46,15 +46,15 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSubmit }) => {
         type="email"
         placeholder="Email"
         value={email}
-        onChange={e => setEmail(e.target.value)}
+        onChange={(e) => setEmail(e.target.value)}
         className="w-full border rounded-md px-4 py-2 focus:ring-2 focus:ring-emerald-500"
       />
 
       <input
         type="text"
         placeholder="Nazwa użytkownika"
-        value={username}
-        onChange={e => setUsername(e.target.value)}
+        value={login}
+        onChange={(e) => setLogin(e.target.value)}
         className="w-full border rounded-md px-4 py-2 focus:ring-2 focus:ring-emerald-500"
       />
 
@@ -62,7 +62,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSubmit }) => {
         type="password"
         placeholder="Hasło"
         value={password}
-        onChange={e => setPassword(e.target.value)}
+        onChange={(e) => setPassword(e.target.value)}
         className="w-full border rounded-md px-4 py-2 focus:ring-2 focus:ring-emerald-500"
       />
 
@@ -70,7 +70,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSubmit }) => {
         type="password"
         placeholder="Powtórz hasło"
         value={confirm}
-        onChange={e => setConfirm(e.target.value)}
+        onChange={(e) => setConfirm(e.target.value)}
         className="w-full border rounded-md px-4 py-2 focus:ring-2 focus:ring-emerald-500"
       />
 
@@ -81,7 +81,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSubmit }) => {
         Zarejestruj się
       </button>
     </form>
-  )
-}
+  );
+};
 
-export default RegisterForm
+export default RegisterForm;
