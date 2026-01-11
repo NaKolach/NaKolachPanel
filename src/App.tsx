@@ -15,21 +15,25 @@ type SidebarMode =
 type LatLng = { lat: number; lng: number }
 type FiltersMap = Record<string, boolean>
 
-type GraphHopperPath = {
-  points: {
-    type: 'LineString'
-    coordinates: [number, number][]
-  }
-}
+// type GraphHopperPath = {
+//   points: {
+//     type: 'LineString'
+//     coordinates: [number, number][]
+//   }
+// }
 type RouteResponse = {
   paths: {
-    points: {
-      type: 'LineString'
-      coordinates: [number, number][]
-    }
-    places: BackendPlace[]
-  }[]
-}
+    distance: number;
+    time: number;
+    // To są te surowe koordynaty [lat, lng]
+    paths: [number, number][]; 
+    // Twoje miejsca na trasie
+    points: BackendPlace[]; 
+  }[];
+};
+
+// Zaktualizuj też typ stanu, żeby przyjmował tablicę koordynatów
+type GraphHopperPath = [number, number][];
 
 const METERS_PER_RADIUS_UNIT = 1720
 
@@ -136,39 +140,90 @@ function App() {
   }
 
   // ---------------- ROUTE ----------------
+  // const handleSearchRoute = async () => {
+  //   if (!userLocation) return
+
+  //   setFilters(INITIAL_FILTERS)
+  //   setPlaces([])
+  //   fetchedCategoriesRef.current.clear()
+  //   setSidebarMode({ type: 'default' })
+
+  //   const params = new URLSearchParams()
+
+  //   Object.entries(filters)
+  //     .filter(([, v]) => v)
+  //     .forEach(([id]) => params.append('types', id))
+
+  //   params.append('latitude', userLocation.lat.toString())
+  //   params.append('longitude', userLocation.lng.toString())
+  //   params.append(
+  //     'radius',
+  //     (radius * METERS_PER_RADIUS_UNIT).toString()
+  //   )
+
+  //   const res = await fetch(
+  //     `http://nakolach.com/api/Route?${params.toString()}`
+  //   )
+  //   if (!res.ok) return
+
+  //   const json: RouteResponse = await res.json()
+  //   const path = json.paths[0]
+
+  //   setRoutePath(path?.points ?? null)
+  //   setRoutePlaces(path?.places ?? [])
+  // }
+// ---------------- ROUTE ----------------
   const handleSearchRoute = async () => {
-    if (!userLocation) return
+    if (!userLocation) return;
 
-    setFilters(INITIAL_FILTERS)
-    setPlaces([])
-    fetchedCategoriesRef.current.clear()
-    setSidebarMode({ type: 'default' })
+    // Resetowanie widoku i filtrów przed nowym wyszukiwaniem
+    setFilters(INITIAL_FILTERS);
+    setPlaces([]);
+    fetchedCategoriesRef.current.clear();
+    setSidebarMode({ type: 'default' });
 
-    const params = new URLSearchParams()
+    const params = new URLSearchParams();
 
+    // Dodawanie wybranych kategorii do parametrów
     Object.entries(filters)
       .filter(([, v]) => v)
-      .forEach(([id]) => params.append('types', id))
+      .forEach(([id]) => params.append('categories', id));
 
-    params.append('latitude', userLocation.lat.toString())
-    params.append('longitude', userLocation.lng.toString())
+    params.append('latitude', userLocation.lat.toString());
+    params.append('longitude', userLocation.lng.toString());
     params.append(
       'radius',
       (radius * METERS_PER_RADIUS_UNIT).toString()
-    )
+    );
 
-    const res = await fetch(
-      `http://nakolach.com/api/Route?${params.toString()}`
-    )
-    if (!res.ok) return
+    try {
+      const res = await fetch(
+        `http://nakolach.com/api/Routes?${params.toString()}`
+      );
 
-    const json: RouteResponse = await res.json()
-    const path = json.paths[0]
+      if (!res.ok) {
+        console.error("Błąd pobierania trasy:", res.statusText);
+        return;
+      }
 
-    setRoutePath(path?.points ?? null)
-    setRoutePlaces(path?.places ?? [])
-  }
+      const json: RouteResponse = await res.json();
+      
+      // Według Twojego JSONa trasa jest w pierwszym elemencie tablicy paths
+      const mainPath = json.paths[0];
 
+      if (mainPath) {
+        // Ustawiamy geometrię linii (tablica punktów [lat, lng])
+        setRoutePath(mainPath.paths);
+        // Ustawiamy ikony miejsc na trasie
+        setRoutePlaces(mainPath.points);
+      } else {
+        setRoutePath(null);
+        setRoutePlaces([]);
+      }
+    } catch (error) {
+      console.error("Błąd połączenia z API:", error);
+    }
+  };
   // ---------------- RENDER ----------------
   if (!user) {
     return <AuthPage onLogin={handleLogin} onRegister={handleRegister} />
