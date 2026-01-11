@@ -64,7 +64,7 @@ export default function RouteParams({
           py-3 rounded-lg
         "
       >
-        Szukaj trasy
+        Szukaj trasę
       </button>
     </>
   )

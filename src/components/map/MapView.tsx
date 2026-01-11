@@ -4,6 +4,7 @@ import RadiusCircle from "../map/RadiusCircle"
 import PlaceMarkers from "../map/PlaceMarkers"
 import type { Category } from "../../data/category"
 import type { BackendPlace } from "../../data/backendPlace"
+import RoutePolyline from "../map/RoutePolyline"
 
 type LatLng = { lat: number; lng: number }
 
@@ -14,12 +15,14 @@ export default function MapView({
   categories,
   userLocation,
   places,
+  routePath,
 }: {
   radius: number
   filters: Record<string, boolean>
   categories: Category[]
   userLocation: LatLng | null
   places: BackendPlace[]
+  routePath: any | null
 }) {
   const center: [number, number] = userLocation
     ? [userLocation.lat, userLocation.lng]
@@ -35,6 +38,7 @@ export default function MapView({
           places={places}
           categories={categories}
         />      
+        <RoutePolyline path={routePath} />
         </MapContainer>
     </main>
   )
