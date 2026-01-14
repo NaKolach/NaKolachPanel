@@ -1,17 +1,21 @@
 import { useState, type FormEvent } from "react"
 
 interface RegisterFormProps {
-  onSubmit: (data: { email: string; username: string; password: string }) => void
+  onSubmit: (data: {
+    email: string
+    username: string
+    password: string
+  }) => Promise<void>
 }
 
-const RegisterForm: React.FC<RegisterFormProps> = ({ onSubmit }) => {
+const RegisterForm = ({ onSubmit }: RegisterFormProps) => {
   const [email, setEmail] = useState("")
   const [username, setUsername] = useState("")
   const [password, setPassword] = useState("")
   const [confirm, setConfirm] = useState("")
   const [error, setError] = useState("")
 
-  const handleSubmit = (e: FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
     setError("")
 
@@ -35,7 +39,11 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSubmit }) => {
       return
     }
 
-    onSubmit({ email, username, password })
+    try {
+      await onSubmit({ email, username, password })
+    } catch {
+      setError("Rejestracja nie powiodła się.")
+    }
   }
 
   return (
@@ -47,7 +55,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSubmit }) => {
         placeholder="Email"
         value={email}
         onChange={e => setEmail(e.target.value)}
-        className="w-full border rounded-md px-4 py-2 focus:ring-2 focus:ring-emerald-500"
+        className="w-full border rounded-md px-4 py-2"
       />
 
       <input
@@ -55,7 +63,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSubmit }) => {
         placeholder="Nazwa użytkownika"
         value={username}
         onChange={e => setUsername(e.target.value)}
-        className="w-full border rounded-md px-4 py-2 focus:ring-2 focus:ring-emerald-500"
+        className="w-full border rounded-md px-4 py-2"
       />
 
       <input
@@ -63,7 +71,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSubmit }) => {
         placeholder="Hasło"
         value={password}
         onChange={e => setPassword(e.target.value)}
-        className="w-full border rounded-md px-4 py-2 focus:ring-2 focus:ring-emerald-500"
+        className="w-full border rounded-md px-4 py-2"
       />
 
       <input
@@ -71,13 +79,10 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSubmit }) => {
         placeholder="Powtórz hasło"
         value={confirm}
         onChange={e => setConfirm(e.target.value)}
-        className="w-full border rounded-md px-4 py-2 focus:ring-2 focus:ring-emerald-500"
+        className="w-full border rounded-md px-4 py-2"
       />
 
-      <button
-        type="submit"
-        className="w-full bg-emerald-600 text-white py-2 rounded-md font-medium hover:bg-emerald-700"
-      >
+      <button className="w-full bg-emerald-600 text-white py-2 rounded-md">
         Zarejestruj się
       </button>
     </form>

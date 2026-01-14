@@ -1,39 +1,35 @@
-import { useEffect, useRef, useState } from 'react'
-import { CATEGORIES } from './data/categories'
-import Sidebar from './components/layout/Sidebar'
-import MapView from './components/map/MapView'
-import AuthPage from './components/login/AuthPage'
-import type { User } from './data/user'
-import type { Category } from './data/category'
-import type { PinColorKey } from './data/pinColors'
-import type { BackendPlace } from './data/backendPlace'
+import { useEffect, useRef, useState } from "react"
+import { CATEGORIES } from "./data/categories"
+import Sidebar from "./components/layout/Sidebar"
+import MapView from "./components/map/MapView"
+import AuthPage from "./components/login/AuthPage"
+import { getMe } from "./auth/me"
+import type { User } from "./data/user"
+import type { Category } from "./data/category"
+import type { PinColorKey } from "./data/pinColors"
+import type { BackendPlace } from "./data/backendPlace"
+import api from "./api/api"
+import TopUserBar from "./components/mobile/TopUserBar"
+import BottomSheet from "./components/mobile/BottomSheet"
+import CategoryEditModal from "./components/mobile/CategoryEditModal"
 
 type SidebarMode =
-  | { type: 'default' }
-  | { type: 'edit-category'; category: string }
+  | { type: "default" }
+  | { type: "edit-category"; category: string }
 
 type LatLng = { lat: number; lng: number }
 type FiltersMap = Record<string, boolean>
 
-// type GraphHopperPath = {
-//   points: {
-//     type: 'LineString'
-//     coordinates: [number, number][]
-//   }
-// }
 type RouteResponse = {
   paths: {
-    distance: number;
-    time: number;
-    // To są te surowe koordynaty [lat, lng]
-    paths: [number, number][]; 
-    // Twoje miejsca na trasie
-    points: BackendPlace[]; 
-  }[];
-};
+    distance: number
+    time: number
+    paths: [number, number][]
+    points: BackendPlace[]
+  }[]
+}
 
-// Zaktualizuj też typ stanu, żeby przyjmował tablicę koordynatów
-type GraphHopperPath = [number, number][];
+type GraphHopperPath = [number, number][]
 
 const METERS_PER_RADIUS_UNIT = 1720
 
@@ -44,15 +40,44 @@ const INITIAL_FILTERS = Object.fromEntries(
 function App() {
   const [radius, setRadius] = useState(10)
   const [filters, setFilters] = useState<FiltersMap>(INITIAL_FILTERS)
-  const [sidebarMode, setSidebarMode] = useState<SidebarMode>({ type: 'default' })
+  const [sidebarMode, setSidebarMode] = useState<SidebarMode>({
+    type: "default",
+  })
   const [routePlaces, setRoutePlaces] = useState<BackendPlace[]>([])
   const [places, setPlaces] = useState<BackendPlace[]>([])
   const [user, setUser] = useState<User | null>(null)
   const [userLocation, setUserLocation] = useState<LatLng | null>(null)
   const [categories, setCategories] = useState<Category[]>(CATEGORIES)
   const [routePath, setRoutePath] = useState<GraphHopperPath | null>(null)
+  const [authChecked, setAuthChecked] = useState(false)
 
   const fetchedCategoriesRef = useRef<Set<string>>(new Set())
+
+  // ---------------- AUTH (/auth/me) ----------------
+  // useEffect(() => {
+  //   getMe()
+  //     .then(setUser)
+  //     .catch(() => setUser(null))
+  //     .finally(() => setAuthChecked(true))
+  // }, [])
+    // ---------------- end AUTH (/auth/me) ----------------
+
+// ---------------- mockup user ----------------
+// ---------------- mockup user ----------------
+const DEV_USER: User = {
+  id: 1,
+  email: "dev@test.pl",
+  username: "DevUser",
+  routes: [],
+}
+
+useEffect(() => {
+  setUser(DEV_USER)
+  setAuthChecked(true)
+}, [])
+// ---------------- mockup user ----------------
+// ---------------- mockup user ----------------
+
 
   // ---------------- GEOLOCATION ----------------
   useEffect(() => {
@@ -70,19 +95,6 @@ function App() {
     )
   }, [])
 
-  // ---------------- AUTH ----------------
-  const handleLogin = async (data: { email: string; password: string }) => {
-    setUser({ email: data.email, username: 'DevUser', routes: [] })
-  }
-
-  const handleRegister = async (data: {
-    email: string
-    username: string
-    password: string
-  }) => {
-    setUser({ email: data.email, username: data.username, routes: [] })
-  }
-
   // ---------------- CATEGORIES ----------------
   const updateCategoryColor = (id: string, color: PinColorKey) => {
     setCategories(prev =>
@@ -97,7 +109,7 @@ function App() {
     }))
   }
 
-  // ---------------- FETCH POINTS (EFFECT) ----------------
+  // ---------------- FETCH POINTS ----------------
   useEffect(() => {
     if (!userLocation) return
 
@@ -117,22 +129,22 @@ function App() {
   const fetchCategory = async (category: string) => {
     if (!userLocation) return
 
-    const params = new URLSearchParams({
+    const params = {
       categories: category,
-      latitude: userLocation.lat.toString(),
-      longitude: userLocation.lng.toString(),
-      radius: (radius * METERS_PER_RADIUS_UNIT).toString(),
-    })
+      latitude: userLocation.lat,
+      longitude: userLocation.lng,
+      radius: radius * METERS_PER_RADIUS_UNIT,
+    }
 
-    const res = await fetch(`http://nakolach.com/api/Points?${params}`)
-    if (!res.ok) return
-
-    const data: BackendPlace[] = await res.json()
-
-    setPlaces(prev => [
-      ...prev.filter(p => p.category !== category),
-      ...data,
-    ])
+    try {
+      const res = await api.get<BackendPlace[]>("/P`oints", { params })
+      setPlaces(prev => [
+        ...prev.filter(p => p.category !== category),
+        ...res.data,
+      ])
+    } catch (err) {
+      console.error("Błąd pobierania punktów:", err)
+    }
   }
 
   const removeCategoryPlaces = (category: string) => {
@@ -140,97 +152,50 @@ function App() {
   }
 
   // ---------------- ROUTE ----------------
-  // const handleSearchRoute = async () => {
-  //   if (!userLocation) return
-
-  //   setFilters(INITIAL_FILTERS)
-  //   setPlaces([])
-  //   fetchedCategoriesRef.current.clear()
-  //   setSidebarMode({ type: 'default' })
-
-  //   const params = new URLSearchParams()
-
-  //   Object.entries(filters)
-  //     .filter(([, v]) => v)
-  //     .forEach(([id]) => params.append('types', id))
-
-  //   params.append('latitude', userLocation.lat.toString())
-  //   params.append('longitude', userLocation.lng.toString())
-  //   params.append(
-  //     'radius',
-  //     (radius * METERS_PER_RADIUS_UNIT).toString()
-  //   )
-
-  //   const res = await fetch(
-  //     `http://nakolach.com/api/Route?${params.toString()}`
-  //   )
-  //   if (!res.ok) return
-
-  //   const json: RouteResponse = await res.json()
-  //   const path = json.paths[0]
-
-  //   setRoutePath(path?.points ?? null)
-  //   setRoutePlaces(path?.places ?? [])
-  // }
-// ---------------- ROUTE ----------------
   const handleSearchRoute = async () => {
-    if (!userLocation) return;
+    if (!userLocation) return
 
-    // Resetowanie widoku i filtrów przed nowym wyszukiwaniem
-    setFilters(INITIAL_FILTERS);
-    setPlaces([]);
-    fetchedCategoriesRef.current.clear();
-    setSidebarMode({ type: 'default' });
+    setFilters(INITIAL_FILTERS)
+    setPlaces([])
+    fetchedCategoriesRef.current.clear()
+    setSidebarMode({ type: "default" })
 
-    const params = new URLSearchParams();
+    const params = new URLSearchParams()
 
-    // Dodawanie wybranych kategorii do parametrów
     Object.entries(filters)
       .filter(([, v]) => v)
-      .forEach(([id]) => params.append('categories', id));
+      .forEach(([id]) => params.append("categories", id))
 
-    params.append('latitude', userLocation.lat.toString());
-    params.append('longitude', userLocation.lng.toString());
+    params.append("latitude", userLocation.lat.toString())
+    params.append("longitude", userLocation.lng.toString())
     params.append(
-      'radius',
+      "radius",
       (radius * METERS_PER_RADIUS_UNIT).toString()
-    );
+    )
 
-    try {
-      const res = await fetch(
-        `http://nakolach.com/api/Routes?${params.toString()}`
-      );
+  const res = await api.get<RouteResponse>("/Routes", { params })
+  const mainPath = res.data.paths[0]
 
-      if (!res.ok) {
-        console.error("Błąd pobierania trasy:", res.statusText);
-        return;
-      }
-
-      const json: RouteResponse = await res.json();
-      
-      // Według Twojego JSONa trasa jest w pierwszym elemencie tablicy paths
-      const mainPath = json.paths[0];
-
-      if (mainPath) {
-        // Ustawiamy geometrię linii (tablica punktów [lat, lng])
-        setRoutePath(mainPath.paths);
-        // Ustawiamy ikony miejsc na trasie
-        setRoutePlaces(mainPath.points);
-      } else {
-        setRoutePath(null);
-        setRoutePlaces([]);
-      }
-    } catch (error) {
-      console.error("Błąd połączenia z API:", error);
+    if (mainPath) {
+      setRoutePath(mainPath.paths)
+      setRoutePlaces(mainPath.points)
+    } else {
+      setRoutePath(null)
+      setRoutePlaces([])
     }
-  };
+  }
+
   // ---------------- RENDER ----------------
+  if (!authChecked) return null
+
   if (!user) {
-    return <AuthPage onLogin={handleLogin} onRegister={handleRegister} />
+    return <AuthPage onLoginSuccess={setUser} />
   }
 
   return (
-    <div className="flex h-screen w-screen overflow-hidden">
+  <div className="h-screen w-screen relative overflow-hidden">
+    {/* DESKTOP */}
+    <div className="hidden md:flex h-full w-full">
       <Sidebar
         user={user}
         onLogout={() => setUser(null)}
@@ -247,14 +212,51 @@ function App() {
 
       <MapView
         radius={radius}
-        filters={filters}
         categories={categories}
         userLocation={userLocation}
         places={[...places, ...routePlaces]}
         routePath={routePath}
       />
     </div>
-  )
+
+    {/* MOBILE */}
+    <div className="md:hidden h-full w-full relative">
+      <MapView
+        radius={radius}
+        categories={categories}
+        userLocation={userLocation}
+        places={[...places, ...routePlaces]}
+        routePath={routePath}
+        disabled={sidebarMode.type === "edit-category"}
+      />
+
+      <TopUserBar
+        user={user}
+        onLogout={() => setUser(null)}
+      />
+
+      <BottomSheet
+        radius={radius}
+        filters={filters}
+        onRadiusChange={setRadius}
+        onToggleCategory={toggleCategory}
+        onEditCategory={(id) =>
+          setSidebarMode({ type: "edit-category", category: id })
+        }
+        onSearchRoute={handleSearchRoute}
+      />
+      {sidebarMode.type === "edit-category" && (
+        <CategoryEditModal
+          category={
+            categories.find(c => c.id === sidebarMode.category)!
+          }
+          onSave={updateCategoryColor}
+          onClose={() => setSidebarMode({ type: "default" })}
+        />
+      )}
+    </div>
+  </div>
+)
 }
 
 export default App

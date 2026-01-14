@@ -13,7 +13,6 @@ import { Marker, Popup } from 'react-leaflet';
 import L from 'leaflet';
 import pinSVG from "../../assets/svg/pin4.svg"
 
-// Define the icon
 const locationIcon = new L.Icon({
   iconUrl: pinSVG,
   iconSize: [28, 28],
