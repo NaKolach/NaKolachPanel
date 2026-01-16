@@ -15,6 +15,7 @@ interface MapViewProps {
   categories: Category[]
   userLocation: LatLng | null
   places: BackendPlace[]
+  routePlaces: BackendPlace[]
   routePath: any | null
   disabled?: boolean
 }
@@ -24,6 +25,7 @@ export default function MapView({
   categories,
   userLocation,
   places,
+  routePlaces,
   routePath,
   disabled = false,
 }: MapViewProps) {
@@ -32,20 +34,13 @@ export default function MapView({
     : DEFAULT_CENTER
 
   return (
-    <main
-      className={`h-full w-full ${
-        disabled ? "pointer-events-none" : ""
-      }`}
-    >
-      <MapContainer
-        center={center}
-        zoom={12}
-        className="h-full w-full"
-      >
+    <main className={`h-full w-full ${disabled ? "pointer-events-none" : ""}`}>
+      <MapContainer center={center} zoom={12} className="h-full w-full">
         <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
         <UserLocation center={center} />
         <RadiusCircle center={center} radius={radius} />
         <PlaceMarkers places={places} categories={categories} />
+        <PlaceMarkers places={routePlaces} categories={categories} />
         <RoutePolyline path={routePath} />
       </MapContainer>
     </main>

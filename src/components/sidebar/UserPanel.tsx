@@ -1,11 +1,11 @@
 import UserIcon from '../../assets/svg/user.svg?react'
 
 interface UserPanelProps {
-  username: string
+  login: string
   onLogout: () => void
 }
 
-export default function UserPanel({ username, onLogout }: UserPanelProps) {
+export default function UserPanel({ login, onLogout }: UserPanelProps) {
   return (
     <div className="flex flex-col gap-1">
       <div className="flex items-center gap-3">
@@ -13,7 +13,7 @@ export default function UserPanel({ username, onLogout }: UserPanelProps) {
           <UserIcon className="w-5 h-5 text-white" />
         </div>
 
-        <span className="font-semibold text-gray-900 dark:text-gray-100">{username}</span>
+        <span className="font-semibold text-gray-900 dark:text-gray-100">{login}</span>
       </div>
 
       <button

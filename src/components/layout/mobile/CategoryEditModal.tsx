@@ -1,6 +1,6 @@
-import CategoryEditPanel from "../sidebar/CategoryEditPanel"
-import type { Category } from "../../data/category"
-import type { PinColorKey } from "../../data/pinColors"
+import CategoryEditPanel from "../../sidebar/CategoryEditPanel"
+import type { Category } from "../../../data/category"
+import type { PinColorKey } from "../../../data/pinColors"
 
 interface CategoryEditModalProps {
   category: Category

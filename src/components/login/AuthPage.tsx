@@ -14,7 +14,7 @@ const AuthPage = ({ onLoginSuccess }: Props) => {
   const [isLogin, setIsLogin] = useState(true)
 
   const handleLogin = async (data: {
-    email: string
+    login: string
     password: string
   }) => {
     await login(data)
@@ -24,11 +24,11 @@ const AuthPage = ({ onLoginSuccess }: Props) => {
 
   const handleRegister = async (data: {
     email: string
-    username: string
+    login: string
     password: string
   }) => {
     await register(data)
-    setIsLogin(true) // ⬅️ POWRÓT DO LOGINU
+    setIsLogin(true) // POWRÓT DO LOGINU
   }
 
   return (

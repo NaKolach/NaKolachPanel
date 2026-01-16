@@ -1,5 +1,5 @@
 import { useState } from "react"
-import type { User } from "../../data/user"
+import type { User } from "../../../data/user"
 
 interface TopUserBarProps {
   user: User
@@ -30,11 +30,11 @@ export default function TopUserBar({ user, onLogout }: TopUserBarProps) {
           "
         >
           <div className="w-8 h-8 rounded-full bg-green-600 flex items-center justify-center text-white text-sm font-semibold">
-            {user.username[0].toUpperCase()}
+            {user.login[0].toUpperCase()}
           </div>
 
           <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
-            {user.username}
+            {user.login}
           </span>
 
           <span className="text-gray-500">▾</span>

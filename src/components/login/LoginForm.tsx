@@ -3,11 +3,11 @@ import User from "../../assets/svg/user.svg?react"
 import Lock from "../../assets/svg/lock.svg?react"
 
 interface LoginFormProps {
-  onSubmit: (data: { email: string; password: string }) => Promise<void>
+  onSubmit: (data: { login: string; password: string }) => Promise<void>
 }
 
 const LoginForm = ({ onSubmit }: LoginFormProps) => {
-  const [email, setEmail] = useState("")
+  const [login, setLogin] = useState("")
   const [password, setPassword] = useState("")
   const [error, setError] = useState("")
 
@@ -15,13 +15,13 @@ const LoginForm = ({ onSubmit }: LoginFormProps) => {
     e.preventDefault()
     setError("")
 
-    if (!email || !password) {
+    if (!login || !password) {
       setError("Uzupełnij login i hasło.")
       return
     }
 
     try {
-      await onSubmit({ email, password })
+      await onSubmit({ login, password })
     } catch {
       setError("Nieprawidłowe dane logowania.")
     }
@@ -33,10 +33,10 @@ const LoginForm = ({ onSubmit }: LoginFormProps) => {
 
       <div className="relative">
         <input
-          type="email"
-          value={email}
-          onChange={e => setEmail(e.target.value)}
-          placeholder="Email"
+          type="text"
+          value={login}
+          onChange={e => setLogin(e.target.value)}
+          placeholder="Login"
           className="w-full border rounded-md px-10 py-2"
         />
         <span className="absolute left-3 top-2.5 text-gray-400">

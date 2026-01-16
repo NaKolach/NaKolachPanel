@@ -1,10 +1,11 @@
 import UserPanel from "../sidebar/UserPanel"
-import RecentRoutes from "../sidebar/RecentRoutes"
+//import RecentRoutes from "../sidebar/RecentRoutes"
 import RouteParams from "../sidebar/RouteParams"
 import CategoryEditPanel from "../sidebar/CategoryEditPanel"
 import type { User } from "../../data/user"
 import type { Category } from "../../data/category"
 import type { PinColorKey } from "../../data/pinColors"
+import type { BackendPlace } from "../../data/backendPlace"
 
 interface SidebarProps {
   user: User
@@ -21,9 +22,17 @@ interface SidebarProps {
 
   setSidebarMode: (v: any) => void
 
+  onSelectRecentRoute: (route: {
+    radius: number
+    path: [number, number][]
+    points: BackendPlace[]
+  }) => void
+
   categories: Category[]
   onSaveCategoryColor: (id: string, color: PinColorKey) => void
   onSearchRoute: () => Promise<void>
+
+  isSearchingRoute: boolean
 }
 
 export default function Sidebar(props: SidebarProps) {
@@ -34,13 +43,14 @@ export default function Sidebar(props: SidebarProps) {
       {sidebarMode.type === "default" && (
         <>
           <UserPanel
-            username={props.user.username}
+            login={props.user.login}
             onLogout={props.onLogout}
           />
 
-          <RecentRoutes />
+          {/* <RecentRoutes onSelectRoute={props.onSelectRecentRoute} /> */}
 
           <RouteParams
+            isSearchingRoute={props.isSearchingRoute}
             radius={props.radius}
             filters={props.filters}
             onRadiusChange={props.onRadiusChange}

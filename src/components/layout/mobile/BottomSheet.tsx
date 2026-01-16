@@ -1,5 +1,6 @@
 import { useState } from "react"
-import RouteParams from "../sidebar/RouteParams"
+import RouteParams from "../../sidebar/RouteParams"
+//import RecentRoutes from "../../sidebar/RecentRoutes"
 
 type SheetState = "collapsed" | "half" | "expanded"
 
@@ -10,6 +11,8 @@ interface BottomSheetProps {
   onToggleCategory: (id: string) => void
   onEditCategory: (id: string) => void
   onSearchRoute: () => Promise<void>
+  isSearchingRoute: boolean
+  onSelectRecentRoute: (route: any) => void
 }
 
 const translateMap: Record<SheetState, string> = {
@@ -22,6 +25,7 @@ export default function BottomSheet(props: BottomSheetProps) {
   const [state, setState] = useState<SheetState>("collapsed")
 
   const handleSearch = async () => {
+    if (props.isSearchingRoute) return
     await props.onSearchRoute()
     setState("collapsed")
   }
@@ -53,7 +57,9 @@ export default function BottomSheet(props: BottomSheetProps) {
       </div>
 
       {/* CONTENT */}
-      <div className="px-4 pb-4 max-h-[75vh] overflow-y-auto">
+      <div className="px-4 pb-4 max-h-[75vh] overflow-y-auto space-y-4">
+        {/* <RecentRoutes onSelectRoute={props.onSelectRecentRoute} /> */}
+
         <RouteParams
           radius={props.radius}
           filters={props.filters}
@@ -61,6 +67,7 @@ export default function BottomSheet(props: BottomSheetProps) {
           onToggleCategory={props.onToggleCategory}
           onEditCategory={props.onEditCategory}
           onSearchRoute={handleSearch}
+          isSearchingRoute={props.isSearchingRoute}
         />
       </div>
     </div>

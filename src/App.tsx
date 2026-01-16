@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react"
 import { CATEGORIES } from "./data/categories"
 import Sidebar from "./components/layout/Sidebar"
-import MapView from "./components/map/MapView"
+import MapView from "./components/layout/MapView"
 import AuthPage from "./components/login/AuthPage"
 import { getMe } from "./auth/me"
 import type { User } from "./data/user"
@@ -9,9 +9,10 @@ import type { Category } from "./data/category"
 import type { PinColorKey } from "./data/pinColors"
 import type { BackendPlace } from "./data/backendPlace"
 import api from "./api/api"
-import TopUserBar from "./components/mobile/TopUserBar"
-import BottomSheet from "./components/mobile/BottomSheet"
-import CategoryEditModal from "./components/mobile/CategoryEditModal"
+import TopUserBar from "./components/layout/mobile/TopUserBar"
+import BottomSheet from "./components/layout/mobile/BottomSheet"
+import CategoryEditModal from "./components/layout/mobile/CategoryEditModal"
+import MapResetController from "./components/map/MapResetController"
 
 type SidebarMode =
   | { type: "default" }
@@ -37,49 +38,35 @@ const INITIAL_FILTERS = Object.fromEntries(
   CATEGORIES.map(c => [c.id, false])
 ) as FiltersMap
 
-function App() {
+export default function App() {
   const [radius, setRadius] = useState(10)
+  const [debouncedRadius, setDebouncedRadius] = useState(10)
+
   const [filters, setFilters] = useState<FiltersMap>(INITIAL_FILTERS)
-  const [sidebarMode, setSidebarMode] = useState<SidebarMode>({
-    type: "default",
-  })
-  const [routePlaces, setRoutePlaces] = useState<BackendPlace[]>([])
   const [places, setPlaces] = useState<BackendPlace[]>([])
+  const [routePlaces, setRoutePlaces] = useState<BackendPlace[]>([])
+  const [routePath, setRoutePath] = useState<GraphHopperPath | null>(null)
+
   const [user, setUser] = useState<User | null>(null)
   const [userLocation, setUserLocation] = useState<LatLng | null>(null)
   const [categories, setCategories] = useState<Category[]>(CATEGORIES)
-  const [routePath, setRoutePath] = useState<GraphHopperPath | null>(null)
+
+  const [sidebarMode, setSidebarMode] = useState<SidebarMode>({ type: "default" })
+  const [isSearchingRoute, setIsSearchingRoute] = useState(false)
   const [authChecked, setAuthChecked] = useState(false)
 
-  const fetchedCategoriesRef = useRef<Set<string>>(new Set())
+  // jeden AbortController na kategorię
+  const pointsAbortRef = useRef<Map<string, AbortController>>(new Map())
 
-  // ---------------- AUTH (/auth/me) ----------------
-  // useEffect(() => {
-  //   getMe()
-  //     .then(setUser)
-  //     .catch(() => setUser(null))
-  //     .finally(() => setAuthChecked(true))
-  // }, [])
-    // ---------------- end AUTH (/auth/me) ----------------
+  // ---------- AUTH ----------
+  useEffect(() => {
+    getMe()
+      .then(setUser)
+      .catch(() => setUser(null))
+      .finally(() => setAuthChecked(true))
+  }, [])
 
-// ---------------- mockup user ----------------
-// ---------------- mockup user ----------------
-const DEV_USER: User = {
-  id: 1,
-  email: "dev@test.pl",
-  username: "DevUser",
-  routes: [],
-}
-
-useEffect(() => {
-  setUser(DEV_USER)
-  setAuthChecked(true)
-}, [])
-// ---------------- mockup user ----------------
-// ---------------- mockup user ----------------
-
-
-  // ---------------- GEOLOCATION ----------------
+  // ---------- GEOLOCATION ----------
   useEffect(() => {
     navigator.geolocation.getCurrentPosition(
       pos =>
@@ -95,168 +82,202 @@ useEffect(() => {
     )
   }, [])
 
-  // ---------------- CATEGORIES ----------------
+  // ---------- DEBOUNCE RADIUS ----------
+  useEffect(() => {
+    const id = setTimeout(() => setDebouncedRadius(radius), 1000)
+    return () => clearTimeout(id)
+  }, [radius])
+
+  // ---------- RESET ROUTE ----------
+  useEffect(() => {
+    setRoutePath(null)
+    setRoutePlaces([])
+  }, [filters, debouncedRadius])
+
+  // ---------- CATEGORY COLOR ----------
   const updateCategoryColor = (id: string, color: PinColorKey) => {
     setCategories(prev =>
       prev.map(c => (c.id === id ? { ...c, pinColor: color } : c))
     )
   }
 
+  // ---------- TOGGLE CATEGORY ----------
   const toggleCategory = (id: string) => {
-    setFilters(prev => ({
-      ...prev,
-      [id]: !prev[id],
-    }))
+    setFilters(prev => ({ ...prev, [id]: !prev[id] }))
   }
 
-  // ---------------- FETCH POINTS ----------------
+  // ---------- FETCH CATEGORIES ----------
   useEffect(() => {
     if (!userLocation) return
 
     Object.entries(filters).forEach(([category, enabled]) => {
-      if (enabled && !fetchedCategoriesRef.current.has(category)) {
-        fetchedCategoriesRef.current.add(category)
-        fetchCategory(category)
+      // kategoria wyłączona → abort + cleanup
+      if (!enabled) {
+        pointsAbortRef.current.get(category)?.abort()
+        pointsAbortRef.current.delete(category)
+        setPlaces(p => p.filter(pl => pl.category !== category))
+        return
       }
 
-      if (!enabled && fetchedCategoriesRef.current.has(category)) {
-        fetchedCategoriesRef.current.delete(category)
-        removeCategoryPlaces(category)
-      }
+      // kategoria włączona → zawsze fetch z aktualnym radius
+      pointsAbortRef.current.get(category)?.abort()
+
+      const controller = new AbortController()
+      pointsAbortRef.current.set(category, controller)
+
+      api
+        .get<BackendPlace[]>("/Points", {
+          params: {
+            categories: category,
+            latitude: userLocation.lat,
+            longitude: userLocation.lng,
+            radius: debouncedRadius * METERS_PER_RADIUS_UNIT,
+          },
+          signal: controller.signal,
+        })
+        .then(res => {
+          setPlaces(prev => [
+            ...prev.filter(p => p.category !== category),
+            ...res.data,
+          ])
+        })
+        .catch(err => {
+          if (err.name !== "CanceledError") throw err
+        })
     })
-  }, [filters, userLocation])
+  }, [filters, debouncedRadius, userLocation])
 
-  const fetchCategory = async (category: string) => {
-    if (!userLocation) return
-
-    const params = {
-      categories: category,
-      latitude: userLocation.lat,
-      longitude: userLocation.lng,
-      radius: radius * METERS_PER_RADIUS_UNIT,
-    }
-
-    try {
-      const res = await api.get<BackendPlace[]>("/P`oints", { params })
-      setPlaces(prev => [
-        ...prev.filter(p => p.category !== category),
-        ...res.data,
-      ])
-    } catch (err) {
-      console.error("Błąd pobierania punktów:", err)
-    }
-  }
-
-  const removeCategoryPlaces = (category: string) => {
-    setPlaces(prev => prev.filter(p => p.category !== category))
-  }
-
-  // ---------------- ROUTE ----------------
+  // ---------- ROUTE ----------
   const handleSearchRoute = async () => {
+    if (!Object.values(filters).some(Boolean)) return
     if (!userLocation) return
+
+    // route ma pełną kontrolę → abort wszystkiego
+    pointsAbortRef.current.forEach(c => c.abort())
+    pointsAbortRef.current.clear()
 
     setFilters(INITIAL_FILTERS)
     setPlaces([])
-    fetchedCategoriesRef.current.clear()
-    setSidebarMode({ type: "default" })
+    setRoutePath(null)
+    setRoutePlaces([])
+    setIsSearchingRoute(true)
 
-    const params = new URLSearchParams()
+    try {
+      const params = new URLSearchParams()
 
-    Object.entries(filters)
-      .filter(([, v]) => v)
-      .forEach(([id]) => params.append("categories", id))
+      Object.entries(filters)
+        .filter(([, v]) => v)
+        .forEach(([id]) => params.append("categories", id))
 
-    params.append("latitude", userLocation.lat.toString())
-    params.append("longitude", userLocation.lng.toString())
-    params.append(
-      "radius",
-      (radius * METERS_PER_RADIUS_UNIT).toString()
-    )
+      params.append("latitude", userLocation.lat.toString())
+      params.append("longitude", userLocation.lng.toString())
+      params.append(
+        "radius",
+        (debouncedRadius * METERS_PER_RADIUS_UNIT).toString()
+      )
 
-  const res = await api.get<RouteResponse>("/Routes", { params })
-  const mainPath = res.data.paths[0]
+      const res = await api.get<RouteResponse>("/Routes", { params })
+      const mainPath = res.data.paths[0]
 
-    if (mainPath) {
-      setRoutePath(mainPath.paths)
-      setRoutePlaces(mainPath.points)
-    } else {
-      setRoutePath(null)
-      setRoutePlaces([])
+      if (mainPath) {
+        setRoutePath(mainPath.paths)
+        setRoutePlaces(mainPath.points)
+      }
+    } finally {
+      setIsSearchingRoute(false)
     }
   }
 
-  // ---------------- RENDER ----------------
+  // ---------- RENDER ----------
   if (!authChecked) return null
+  if (!user) return <AuthPage onLoginSuccess={setUser} />
 
-  if (!user) {
-    return <AuthPage onLoginSuccess={setUser} />
+  const handleLogout = () => {
+    pointsAbortRef.current.forEach(c => c.abort())
+    pointsAbortRef.current.clear()
+
+    setUser(null)
+    setPlaces([])
+    setRoutePlaces([])
+    setRoutePath(null)
+    setFilters(INITIAL_FILTERS)
+    setSidebarMode({ type: "default" })
   }
 
   return (
-  <div className="h-screen w-screen relative overflow-hidden">
-    {/* DESKTOP */}
-    <div className="hidden md:flex h-full w-full">
-      <Sidebar
-        user={user}
-        onLogout={() => setUser(null)}
-        radius={radius}
-        filters={filters}
-        onRadiusChange={setRadius}
-        onToggleCategory={toggleCategory}
-        sidebarMode={sidebarMode}
-        setSidebarMode={setSidebarMode}
-        categories={categories}
-        onSaveCategoryColor={updateCategoryColor}
-        onSearchRoute={handleSearchRoute}
-      />
-
-      <MapView
-        radius={radius}
-        categories={categories}
-        userLocation={userLocation}
-        places={[...places, ...routePlaces]}
-        routePath={routePath}
-      />
-    </div>
-
-    {/* MOBILE */}
-    <div className="md:hidden h-full w-full relative">
-      <MapView
-        radius={radius}
-        categories={categories}
-        userLocation={userLocation}
-        places={[...places, ...routePlaces]}
-        routePath={routePath}
-        disabled={sidebarMode.type === "edit-category"}
-      />
-
-      <TopUserBar
-        user={user}
-        onLogout={() => setUser(null)}
-      />
-
-      <BottomSheet
-        radius={radius}
-        filters={filters}
-        onRadiusChange={setRadius}
-        onToggleCategory={toggleCategory}
-        onEditCategory={(id) =>
-          setSidebarMode({ type: "edit-category", category: id })
-        }
-        onSearchRoute={handleSearchRoute}
-      />
-      {sidebarMode.type === "edit-category" && (
-        <CategoryEditModal
-          category={
-            categories.find(c => c.id === sidebarMode.category)!
-          }
-          onSave={updateCategoryColor}
-          onClose={() => setSidebarMode({ type: "default" })}
+    <div className="h-screen w-screen overflow-hidden">
+      <div className="hidden md:flex h-full">
+        <Sidebar
+          user={user}
+          onLogout={handleLogout}
+          radius={radius}
+          filters={filters}
+          onRadiusChange={setRadius}
+          onToggleCategory={toggleCategory}
+          sidebarMode={sidebarMode}
+          setSidebarMode={setSidebarMode}
+          categories={categories}
+          onSaveCategoryColor={updateCategoryColor}
+          onSearchRoute={handleSearchRoute}
+          isSearchingRoute={isSearchingRoute}
+          onSelectRecentRoute={() => {}}
         />
-      )}
-    </div>
-  </div>
-)
-}
 
-export default App
+        <MapResetController
+          resetKey={`${userLocation?.lat}-${userLocation?.lng}`}
+          onReset={() => {
+            pointsAbortRef.current.forEach(c => c.abort())
+            pointsAbortRef.current.clear()
+            setPlaces([])
+            setRoutePlaces([])
+            setRoutePath(null)
+          }}
+        />
+
+        <MapView
+          radius={radius}
+          categories={categories}
+          userLocation={userLocation}
+          places={places}
+          routePlaces={routePlaces}
+          routePath={routePath}
+        />
+      </div>
+
+      <div className="md:hidden h-full">
+        <MapView
+          radius={radius}
+          categories={categories}
+          userLocation={userLocation}
+          places={places}
+          routePlaces={routePlaces}
+          routePath={routePath}
+          disabled={sidebarMode.type === "edit-category"}
+        />
+
+        <TopUserBar user={user} onLogout={handleLogout} />
+
+        <BottomSheet
+          radius={radius}
+          filters={filters}
+          onRadiusChange={setRadius}
+          onToggleCategory={toggleCategory}
+          onEditCategory={id =>
+            setSidebarMode({ type: "edit-category", category: id })
+          }
+          onSearchRoute={handleSearchRoute}
+          isSearchingRoute={isSearchingRoute}
+          onSelectRecentRoute={() => {}}
+        />
+
+        {sidebarMode.type === "edit-category" && (
+          <CategoryEditModal
+            category={categories.find(c => c.id === sidebarMode.category)!}
+            onSave={updateCategoryColor}
+            onClose={() => setSidebarMode({ type: "default" })}
+          />
+        )}
+      </div>
+    </div>
+  )
+}

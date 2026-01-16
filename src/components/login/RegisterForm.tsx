@@ -3,34 +3,29 @@ import { useState, type FormEvent } from "react"
 interface RegisterFormProps {
   onSubmit: (data: {
     email: string
-    username: string
+    login: string
     password: string
   }) => Promise<void>
 }
 
+type ApiValidationError = {
+  status: number
+  errors?: Record<string, string[]>
+}
+
 const RegisterForm = ({ onSubmit }: RegisterFormProps) => {
   const [email, setEmail] = useState("")
-  const [username, setUsername] = useState("")
+  const [login, setLogin] = useState("")
   const [password, setPassword] = useState("")
   const [confirm, setConfirm] = useState("")
-  const [error, setError] = useState("")
+  const [error, setError] = useState<string | null>(null)
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
-    setError("")
+    setError(null)
 
-    if (!email || !username || !password || !confirm) {
+    if (!email || !login || !password || !confirm) {
       setError("Wszystkie pola są wymagane.")
-      return
-    }
-
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      setError("Nieprawidłowy email.")
-      return
-    }
-
-    if (password.length < 6) {
-      setError("Hasło musi mieć minimum 6 znaków.")
       return
     }
 
@@ -40,8 +35,19 @@ const RegisterForm = ({ onSubmit }: RegisterFormProps) => {
     }
 
     try {
-      await onSubmit({ email, username, password })
-    } catch {
+      await onSubmit({ email, login, password })
+    } catch (err: any) {
+      const apiError: ApiValidationError | undefined = err?.response?.data
+
+      if (apiError?.errors) {
+        // bierze pierwszy komunikat z backendu, np. Password
+        const firstFieldErrors = Object.values(apiError.errors)[0]
+        if (firstFieldErrors?.length) {
+          setError(firstFieldErrors[0])
+          return
+        }
+      }
+
       setError("Rejestracja nie powiodła się.")
     }
   }
@@ -61,8 +67,8 @@ const RegisterForm = ({ onSubmit }: RegisterFormProps) => {
       <input
         type="text"
         placeholder="Nazwa użytkownika"
-        value={username}
-        onChange={e => setUsername(e.target.value)}
+        value={login}
+        onChange={e => setLogin(e.target.value)}
         className="w-full border rounded-md px-4 py-2"
       />
 
