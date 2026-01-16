@@ -173,7 +173,7 @@ export default function App() {
       params.append("longitude", userLocation.lng.toString())
       params.append(
         "radius",
-        (debouncedRadius * METERS_PER_RADIUS_UNIT).toString()
+        (radius * METERS_PER_RADIUS_UNIT).toString()
       )
 
       const res = await api.get<RouteResponse>("/Routes", { params })
