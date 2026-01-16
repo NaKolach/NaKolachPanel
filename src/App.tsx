@@ -255,6 +255,8 @@ export default function App() {
           onSaveCategoryColor={updateCategoryColor}
           onSearchRoute={handleSearchRoute}
           isSearchingRoute={isSearchingRoute}
+          routePath={routePath}
+          routePlaces={routePlaces}
         />
 
         <MapResetController

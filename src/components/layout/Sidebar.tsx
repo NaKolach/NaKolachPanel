@@ -4,14 +4,19 @@ import RouteParams from "../sidebar/RouteParams"
 import CategoryEditPanel from "../sidebar/CategoryEditPanel"
 import SavedRoutesButton from "../sidebar/SavedRoutesButton"
 import BackButton from "../sidebar/BackButton"
+import SaveLastRouteButton from "../sidebar/SaveLastRouteButton"
 import type { User } from "../../data/user"
 import type { Category } from "../../data/category"
 import type { PinColorKey } from "../../data/pinColors"
+import type { BackendPlace } from "../../data/backendPlace"
+import type { GraphHopperResponse } from "../../data/graphhopper"
 
 type SidebarMode =
   | { type: "default" }
   | { type: "edit-category"; category: string }
   | { type: "saved-routes" }
+
+type GraphHopperPath = [number, number][]
 
 interface SidebarProps {
   user: User
@@ -36,6 +41,9 @@ interface SidebarProps {
   onSaveCategoryColor: (id: string, color: PinColorKey) => void
   onSearchRoute: () => Promise<void>
 
+  routePath: GraphHopperPath | null
+  routePlaces: BackendPlace[]
+
   isSearchingRoute: boolean
 }
 
@@ -50,7 +58,7 @@ export default function Sidebar(props: SidebarProps) {
             login={props.user.login}
             onLogout={props.onLogout}
           />
-          
+
           <div className="py-4">
             <SavedRoutesButton
               onClick={() => setSidebarMode({ type: "saved-routes" })}
@@ -67,6 +75,11 @@ export default function Sidebar(props: SidebarProps) {
               setSidebarMode({ type: "edit-category", category: id })
             }
             onSearchRoute={props.onSearchRoute}
+          />
+
+          <SaveLastRouteButton
+            routePath={props.routePath}
+            routePlaces={props.routePlaces}
           />
         </>
       )}
