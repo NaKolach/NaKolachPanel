@@ -1,4 +1,6 @@
+// api/api.ts
 import axios, { AxiosError, type AxiosRequestConfig } from "axios"
+import { markAuthDead } from "../auth/authState"
 
 type RetryConfig = AxiosRequestConfig & { _retry?: boolean }
 
@@ -7,9 +9,28 @@ const api = axios.create({
   withCredentials: true,
 })
 
-const AUTH_SKIP = ["/auth/", "/profile"]
+const AUTH_SKIP = [
+  "/auth/login",
+  "/auth/register",
+  "/auth/refresh",
+  "/auth/logout",
+]
 
 let isRefreshing = false
+let refreshFailed = false
+
+let queue: Array<{
+  resolve: () => void
+  reject: (reason?: unknown) => void
+}> = []
+
+function resolveQueue(error?: unknown) {
+  queue.forEach(p => {
+    if (error) p.reject(error)
+    else p.resolve()
+  })
+  queue = []
+}
 
 api.interceptors.response.use(
   res => res,
@@ -22,26 +43,35 @@ api.interceptors.response.use(
       !config ||
       status !== 401 ||
       config._retry ||
-      isRefreshing ||
-      AUTH_SKIP.some(p => url.startsWith(p))
+      AUTH_SKIP.some(p => url.startsWith(p)) ||
+      refreshFailed
     ) {
       return Promise.reject(error)
     }
 
-    config._retry = true
+    if (isRefreshing) {
+      return new Promise<void>((resolve, reject) => {
+        queue.push({ resolve, reject })
+      }).then(() => {
+        config._retry = true
+        return api(config)
+      })
+    }
+
     isRefreshing = true
+    config._retry = true
 
     try {
       await api.post("/auth/refresh")
-      return api(config)
-    } catch {
-      try {
-        await api.post("/auth/logout")
-      } catch {}
-      window.location.replace("/login")
-      return Promise.reject(error)
-    } finally {
       isRefreshing = false
+      resolveQueue()
+      return api(config)
+    } catch (refreshError) {
+      refreshFailed = true
+      isRefreshing = false
+      resolveQueue(refreshError)
+      markAuthDead()
+      return Promise.reject(refreshError)
     }
   }
 )

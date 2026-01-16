@@ -1,9 +1,7 @@
+// auth.ts
 import api from "../api/api"
 
-export async function login(payload: {
-  login: string
-  password: string
-}) {
+export async function login(payload: { login: string; password: string }) {
   await api.post("/auth/login", payload)
 }
 

@@ -1,4 +1,6 @@
-import UserIcon from '../../assets/svg/user.svg?react'
+import UserIcon from "../../assets/svg/user.svg?react"
+import api from "../../api/api"
+import { resetAuthDead } from "../../auth/authState"
 
 interface UserPanelProps {
   login: string
@@ -6,6 +8,15 @@ interface UserPanelProps {
 }
 
 export default function UserPanel({ login, onLogout }: UserPanelProps) {
+  const handleLogout = async () => {
+    try {
+      await api.post("/auth/logout")
+    } catch {}
+
+    resetAuthDead()
+    onLogout()
+  }
+
   return (
     <div className="flex flex-col gap-1">
       <div className="flex items-center gap-3">
@@ -13,11 +24,13 @@ export default function UserPanel({ login, onLogout }: UserPanelProps) {
           <UserIcon className="w-5 h-5 text-white" />
         </div>
 
-        <span className="font-semibold text-gray-900 dark:text-gray-100">{login}</span>
+        <span className="font-semibold text-gray-900 dark:text-gray-100">
+          {login}
+        </span>
       </div>
 
       <button
-        onClick={onLogout}
+        onClick={handleLogout}
         className="self-start text-xs text-red-600 hover:underline"
       >
         Wyloguj się

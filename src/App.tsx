@@ -13,10 +13,12 @@ import TopUserBar from "./components/layout/mobile/TopUserBar"
 import BottomSheet from "./components/layout/mobile/BottomSheet"
 import CategoryEditModal from "./components/layout/mobile/CategoryEditModal"
 import MapResetController from "./components/map/MapResetController"
+import { authDead, resetAuthDead } from "./auth/authState"
 
 type SidebarMode =
   | { type: "default" }
   | { type: "edit-category"; category: string }
+  | { type: "saved-routes" }
 
 type LatLng = { lat: number; lng: number }
 type FiltersMap = Record<string, boolean>
@@ -46,7 +48,6 @@ export default function App() {
   const [places, setPlaces] = useState<BackendPlace[]>([])
   const [routePlaces, setRoutePlaces] = useState<BackendPlace[]>([])
   const [routePath, setRoutePath] = useState<GraphHopperPath | null>(null)
-
   const [user, setUser] = useState<User | null>(null)
   const [userLocation, setUserLocation] = useState<LatLng | null>(null)
   const [categories, setCategories] = useState<Category[]>(CATEGORIES)
@@ -54,16 +55,30 @@ export default function App() {
   const [sidebarMode, setSidebarMode] = useState<SidebarMode>({ type: "default" })
   const [isSearchingRoute, setIsSearchingRoute] = useState(false)
   const [authChecked, setAuthChecked] = useState(false)
+  const [mobileMode, setMobileMode] = useState<"default" | "saved-routes">("default")
 
-  // jeden AbortController na kategorię
   const pointsAbortRef = useRef<Map<string, AbortController>>(new Map())
 
-  // ---------- AUTH ----------
+  // ---------- AUTH BOOTSTRAP ----------
   useEffect(() => {
+    let mounted = true
+
+    if (authDead) {
+      if (mounted) {
+        setUser(null)
+        setAuthChecked(true)
+      }
+      return
+    }
+
     getMe()
-      .then(setUser)
-      .catch(() => setUser(null))
-      .finally(() => setAuthChecked(true))
+      .then(u => mounted && setUser(u))
+      .catch(() => mounted && setUser(null))
+      .finally(() => mounted && setAuthChecked(true))
+
+    return () => {
+      mounted = false
+    }
   }, [])
 
   // ---------- GEOLOCATION ----------
@@ -106,12 +121,11 @@ export default function App() {
     setFilters(prev => ({ ...prev, [id]: !prev[id] }))
   }
 
-  // ---------- FETCH CATEGORIES ----------
+  // ---------- FETCH POINTS ----------
   useEffect(() => {
-    if (!userLocation) return
+    if (!userLocation || !user) return
 
     Object.entries(filters).forEach(([category, enabled]) => {
-      // kategoria wyłączona → abort + cleanup
       if (!enabled) {
         pointsAbortRef.current.get(category)?.abort()
         pointsAbortRef.current.delete(category)
@@ -119,7 +133,6 @@ export default function App() {
         return
       }
 
-      // kategoria włączona → zawsze fetch z aktualnym radius
       pointsAbortRef.current.get(category)?.abort()
 
       const controller = new AbortController()
@@ -145,14 +158,13 @@ export default function App() {
           if (err.name !== "CanceledError") throw err
         })
     })
-  }, [filters, debouncedRadius, userLocation])
+  }, [filters, debouncedRadius, userLocation, user])
 
   // ---------- ROUTE ----------
   const handleSearchRoute = async () => {
     if (!Object.values(filters).some(Boolean)) return
     if (!userLocation) return
 
-    // route ma pełną kontrolę → abort wszystkiego
     pointsAbortRef.current.forEach(c => c.abort())
     pointsAbortRef.current.clear()
 
@@ -187,14 +199,32 @@ export default function App() {
       setIsSearchingRoute(false)
     }
   }
-
-  // ---------- RENDER ----------
-  if (!authChecked) return null
-  if (!user) return <AuthPage onLoginSuccess={setUser} />
-
-  const handleLogout = () => {
+  const handleSelectRecentRoute = (routeId: number) => {
     pointsAbortRef.current.forEach(c => c.abort())
     pointsAbortRef.current.clear()
+
+    setFilters(INITIAL_FILTERS)
+    setPlaces([])
+
+    // TODO: backend
+    // GET /api/routes/{routeId}
+  }
+
+
+  // ---------- LOGIN ----------
+  const handleLoginSuccess = (u: User) => {
+    resetAuthDead()
+    setUser(u)
+  }
+
+  // ---------- LOGOUT ----------
+  const handleLogout = async () => {
+    pointsAbortRef.current.forEach(c => c.abort())
+    pointsAbortRef.current.clear()
+
+    try {
+      await api.post("/auth/logout")
+    } catch {}
 
     setUser(null)
     setPlaces([])
@@ -203,6 +233,10 @@ export default function App() {
     setFilters(INITIAL_FILTERS)
     setSidebarMode({ type: "default" })
   }
+
+  // ---------- RENDER ----------
+  if (!authChecked) return null
+  if (!user) return <AuthPage onLoginSuccess={handleLoginSuccess} />
 
   return (
     <div className="h-screen w-screen overflow-hidden">
@@ -216,11 +250,11 @@ export default function App() {
           onToggleCategory={toggleCategory}
           sidebarMode={sidebarMode}
           setSidebarMode={setSidebarMode}
+          onSelectRecentRoute={handleSelectRecentRoute}
           categories={categories}
           onSaveCategoryColor={updateCategoryColor}
           onSearchRoute={handleSearchRoute}
           isSearchingRoute={isSearchingRoute}
-          onSelectRecentRoute={() => {}}
         />
 
         <MapResetController
@@ -255,7 +289,11 @@ export default function App() {
           disabled={sidebarMode.type === "edit-category"}
         />
 
-        <TopUserBar user={user} onLogout={handleLogout} />
+        <TopUserBar
+          user={user}
+          onLogout={handleLogout}
+          onShowSavedRoutes={() => setMobileMode("saved-routes")}
+        />
 
         <BottomSheet
           radius={radius}
@@ -267,7 +305,9 @@ export default function App() {
           }
           onSearchRoute={handleSearchRoute}
           isSearchingRoute={isSearchingRoute}
-          onSelectRecentRoute={() => {}}
+          onSelectRecentRoute={handleSelectRecentRoute}
+          mode={mobileMode}
+          onBack={() => setMobileMode("default")}
         />
 
         {sidebarMode.type === "edit-category" && (

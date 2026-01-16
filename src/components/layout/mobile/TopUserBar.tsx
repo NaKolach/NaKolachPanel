@@ -4,10 +4,15 @@ import type { User } from "../../../data/user"
 interface TopUserBarProps {
   user: User
   onLogout: () => void
+  onShowSavedRoutes: () => void
 }
 
-export default function TopUserBar({ user, onLogout }: TopUserBarProps) {
-  const [open, setOpen] = useState(false)
+export default function TopUserBar({
+  user,
+  onLogout,
+  onShowSavedRoutes,
+  }: TopUserBarProps) {
+    const [open, setOpen] = useState(false)
 
   return (
     <>
@@ -50,13 +55,17 @@ export default function TopUserBar({ user, onLogout }: TopUserBarProps) {
             "
           >
             <button
+              onClick={() => {
+                setOpen(false)
+                onShowSavedRoutes()
+              }}
               className="
                 w-full text-left px-4 py-3
                 text-sm text-gray-800 dark:text-gray-200
                 hover:bg-gray-100 dark:hover:bg-gray-700
               "
             >
-              Ostatnie 3 trasy
+              Zapisane trasy
             </button>
 
             <button

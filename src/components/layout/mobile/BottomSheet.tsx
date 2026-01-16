@@ -1,6 +1,7 @@
 import { useState } from "react"
 import RouteParams from "../../sidebar/RouteParams"
-//import RecentRoutes from "../../sidebar/RecentRoutes"
+import RecentRoutes from "../../sidebar/RecentRoutes"
+import BackButton from "../../sidebar/BackButton"
 
 type SheetState = "collapsed" | "half" | "expanded"
 
@@ -12,7 +13,9 @@ interface BottomSheetProps {
   onEditCategory: (id: string) => void
   onSearchRoute: () => Promise<void>
   isSearchingRoute: boolean
-  onSelectRecentRoute: (route: any) => void
+  onSelectRecentRoute: (routeId: number) => void
+  mode: "default" | "saved-routes"
+  onBack: () => void
 }
 
 const translateMap: Record<SheetState, string> = {
@@ -57,18 +60,32 @@ export default function BottomSheet(props: BottomSheetProps) {
       </div>
 
       {/* CONTENT */}
-      <div className="px-4 pb-4 max-h-[75vh] overflow-y-auto space-y-4">
-        {/* <RecentRoutes onSelectRoute={props.onSelectRecentRoute} /> */}
+      <div className="px-4 pb-4 max-h-[75vh] overflow-y-auto">
+        {props.mode === "saved-routes" ? (
+          <div className="flex flex-col gap-6">
+            <div className="flex items-center gap-3 pt-2">
+              <BackButton onClick={props.onBack} />
 
-        <RouteParams
-          radius={props.radius}
-          filters={props.filters}
-          onRadiusChange={props.onRadiusChange}
-          onToggleCategory={props.onToggleCategory}
-          onEditCategory={props.onEditCategory}
-          onSearchRoute={handleSearch}
-          isSearchingRoute={props.isSearchingRoute}
-        />
+              <h2 className="text-base font-semibold text-gray-800 dark:text-gray-200">
+                Zapisane trasy
+              </h2>
+            </div>
+
+            <RecentRoutes onSelectRoute={props.onSelectRecentRoute} />
+          </div>
+        ) : (
+          <div className="space-y-4">
+            <RouteParams
+              radius={props.radius}
+              filters={props.filters}
+              onRadiusChange={props.onRadiusChange}
+              onToggleCategory={props.onToggleCategory}
+              onEditCategory={props.onEditCategory}
+              onSearchRoute={handleSearch}
+              isSearchingRoute={props.isSearchingRoute}
+            />
+          </div>
+        )}
       </div>
     </div>
   )
