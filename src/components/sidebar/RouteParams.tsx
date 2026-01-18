@@ -1,14 +1,18 @@
 import { CATEGORIES } from "../../data/categories"
 import CategoryFilter from "./CategoryFilter"
+import ActionButton from "../sidebar/ActionButton"
 
 type RouteParamsProps = {
   radius: number
   filters: Record<string, boolean>
   isSearchingRoute: boolean
+
   onRadiusChange: (v: number) => void
   onToggleCategory: (id: string) => void
   onEditCategory: (id: string) => void
+
   onSearchRoute: () => Promise<void>
+  onSearchRouteByPoints: () => Promise<void>
 }
 
 export default function RouteParams({
@@ -19,6 +23,7 @@ export default function RouteParams({
   onToggleCategory,
   onEditCategory,
   onSearchRoute,
+  onSearchRouteByPoints,
 }: RouteParamsProps) {
   const allSelected = Object.values(filters).every(v => v)
 
@@ -31,9 +36,9 @@ export default function RouteParams({
   }
 
   return (
-    <div className="flex flex-col">
+    <div className="flex flex-col text-gray-900 dark:text-gray-100">
       {/* HEADER */}
-      <div className="font-semibold text-gray-900 dark:text-gray-100 mb-2">
+      <div className="font-semibold mb-2">
         Parametry Trasy
       </div>
 
@@ -84,21 +89,22 @@ export default function RouteParams({
         ))}
       </div>
 
-      {/* SEARCH BUTTON */}
-      <button
-        onClick={onSearchRoute}
-        disabled={isSearchingRoute}
-        className="
-          mt-3 w-full
-          bg-green-600 hover:bg-green-700
-          dark:bg-green-500 dark:hover:bg-green-600
-          text-white font-semibold
-          py-3 rounded-lg
-          disabled:opacity-60 disabled:cursor-wait
-        "
-      >
-        {isSearchingRoute ? "Szukam trasy…" : "Szukaj trasę"}
-      </button>
+      {/* ACTIONS */}
+      <div className="mt-3 space-y-2">
+        <ActionButton
+          label="Szukaj trasę"
+          loadingLabel="Szukam trasy…"
+          loading={isSearchingRoute}
+          onClick={onSearchRoute}
+        />
+
+        <ActionButton
+          label="Szukaj trasy przez punkty"
+          loadingLabel="Szukam przez punkty…"
+          loading={isSearchingRoute}
+          onClick={onSearchRouteByPoints}
+        />
+      </div>
     </div>
   )
 }

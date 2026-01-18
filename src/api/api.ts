@@ -1,6 +1,6 @@
 // api/api.ts
 import axios, { AxiosError, type AxiosRequestConfig } from "axios"
-import { markAuthDead } from "../auth/authState"
+import {currentUserId, markAuthDead } from "../auth/authState"
 
 type RetryConfig = AxiosRequestConfig & { _retry?: boolean }
 
@@ -17,7 +17,6 @@ const AUTH_SKIP = [
 ]
 
 let isRefreshing = false
-let refreshFailed = false
 
 let queue: Array<{
   resolve: () => void
@@ -43,9 +42,13 @@ api.interceptors.response.use(
       !config ||
       status !== 401 ||
       config._retry ||
-      AUTH_SKIP.some(p => url.startsWith(p)) ||
-      refreshFailed
+      AUTH_SKIP.some(p => url.startsWith(p))
     ) {
+      return Promise.reject(error)
+    }
+
+    if (!currentUserId) {
+      markAuthDead()
       return Promise.reject(error)
     }
 
@@ -62,12 +65,16 @@ api.interceptors.response.use(
     config._retry = true
 
     try {
-      await api.post("/auth/refresh")
+      await api.post(
+        "/auth/refresh",
+        { userId: currentUserId },
+        { headers: { "Content-Type": "application/json" } }
+      )
+
       isRefreshing = false
       resolveQueue()
       return api(config)
     } catch (refreshError) {
-      refreshFailed = true
       isRefreshing = false
       resolveQueue(refreshError)
       markAuthDead()

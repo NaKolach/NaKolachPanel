@@ -55,19 +55,23 @@ export default function App() {
   const [sidebarMode, setSidebarMode] = useState<SidebarMode>({ type: "default" })
   const [isSearchingRoute, setIsSearchingRoute] = useState(false)
   const [authChecked, setAuthChecked] = useState(false)
-  const [mobileMode, setMobileMode] = useState<"default" | "saved-routes">("default")
+  const [mobileMode, setMobileMode] =
+    useState<"default" | "saved-routes">("default")
+
+  const [selectedPlaces, setSelectedPlaces] =
+    useState<Set<BackendPlace>>(new Set())
+
+  const [noPointsPopup, setNoPointsPopup] = useState(false)
 
   const pointsAbortRef = useRef<Map<string, AbortController>>(new Map())
 
-  // ---------- AUTH BOOTSTRAP ----------
+  // ---------- AUTH ----------
   useEffect(() => {
     let mounted = true
 
     if (authDead) {
-      if (mounted) {
-        setUser(null)
-        setAuthChecked(true)
-      }
+      setUser(null)
+      setAuthChecked(true)
       return
     }
 
@@ -81,7 +85,7 @@ export default function App() {
     }
   }, [])
 
-  // ---------- GEOLOCATION ----------
+  // ---------- GEO ----------
   useEffect(() => {
     navigator.geolocation.getCurrentPosition(
       pos =>
@@ -97,7 +101,7 @@ export default function App() {
     )
   }, [])
 
-  // ---------- DEBOUNCE RADIUS ----------
+  // ---------- DEBOUNCE ----------
   useEffect(() => {
     const id = setTimeout(() => setDebouncedRadius(radius), 1000)
     return () => clearTimeout(id)
@@ -119,6 +123,16 @@ export default function App() {
   // ---------- TOGGLE CATEGORY ----------
   const toggleCategory = (id: string) => {
     setFilters(prev => ({ ...prev, [id]: !prev[id] }))
+  }
+
+  // ---------- TOGGLE PLACE ----------
+  const toggleSelectedPlace = (place: BackendPlace) => {
+    setSelectedPlaces(prev => {
+      const next = new Set(prev)
+      const existing = Array.from(next).find(p => p.id === place.id)
+      existing ? next.delete(existing) : next.add(place)
+      return next
+    })
   }
 
   // ---------- FETCH POINTS ----------
@@ -160,14 +174,14 @@ export default function App() {
     })
   }, [filters, debouncedRadius, userLocation, user])
 
-  // ---------- ROUTE ----------
+  // ---------- SEARCH ROUTE ----------
   const handleSearchRoute = async () => {
-    if (!Object.values(filters).some(Boolean)) return
-    if (!userLocation) return
+    if (!Object.values(filters).some(Boolean) || !userLocation) return
 
     pointsAbortRef.current.forEach(c => c.abort())
     pointsAbortRef.current.clear()
 
+    setSelectedPlaces(new Set())
     setFilters(INITIAL_FILTERS)
     setPlaces([])
     setRoutePath(null)
@@ -183,10 +197,7 @@ export default function App() {
 
       params.append("latitude", userLocation.lat.toString())
       params.append("longitude", userLocation.lng.toString())
-      params.append(
-        "radius",
-        (radius * METERS_PER_RADIUS_UNIT).toString()
-      )
+      params.append("radius", (radius * METERS_PER_RADIUS_UNIT).toString())
 
       const res = await api.get<RouteResponse>("/Routes", { params })
       const mainPath = res.data.paths[0]
@@ -199,6 +210,38 @@ export default function App() {
       setIsSearchingRoute(false)
     }
   }
+
+  // ---------- SEARCH BY POINTS ----------
+  const handleSearchRouteByPoints = async () => {
+    if (selectedPlaces.size === 0) {
+      setNoPointsPopup(true)
+      return
+    }
+
+    setIsSearchingRoute(true)
+    setRoutePath(null)
+    setRoutePlaces([])
+
+    try {
+      const payload = Array.from(selectedPlaces).map(p => p.id)
+
+      const res = await api.post<RouteResponse>(
+        "/Routes/by-points",
+        payload
+      )
+
+      const mainPath = res.data.paths[0]
+
+      if (mainPath) {
+        setRoutePath(mainPath.paths)
+        setRoutePlaces(mainPath.points)
+      }
+    } finally {
+      setIsSearchingRoute(false)
+    }
+  }
+
+  // ---------- RECENT ROUTE ----------
   const handleSelectRecentRoute = (routeId: number) => {
     pointsAbortRef.current.forEach(c => c.abort())
     pointsAbortRef.current.clear()
@@ -206,15 +249,7 @@ export default function App() {
     setFilters(INITIAL_FILTERS)
     setPlaces([])
 
-    // TODO: backend
-    // GET /api/routes/{routeId}
-  }
-
-
-  // ---------- LOGIN ----------
-  const handleLoginSuccess = (u: User) => {
-    resetAuthDead()
-    setUser(u)
+    // TODO: GET /Routes/{routeId}
   }
 
   // ---------- LOGOUT ----------
@@ -226,6 +261,7 @@ export default function App() {
       await api.post("/auth/logout")
     } catch {}
 
+    setSelectedPlaces(new Set())
     setUser(null)
     setPlaces([])
     setRoutePlaces([])
@@ -236,10 +272,18 @@ export default function App() {
 
   // ---------- RENDER ----------
   if (!authChecked) return null
-  if (!user) return <AuthPage onLoginSuccess={handleLoginSuccess} />
+  if (!user) return (
+    <AuthPage
+      onLoginSuccess={u => {
+        resetAuthDead()
+        setUser(u)
+      }}
+    />
+  )
 
   return (
     <div className="h-screen w-screen overflow-hidden">
+      {/* DESKTOP */}
       <div className="hidden md:flex h-full">
         <Sidebar
           user={user}
@@ -254,6 +298,7 @@ export default function App() {
           categories={categories}
           onSaveCategoryColor={updateCategoryColor}
           onSearchRoute={handleSearchRoute}
+          onSearchRouteByPoints={handleSearchRouteByPoints}
           isSearchingRoute={isSearchingRoute}
           routePath={routePath}
           routePlaces={routePlaces}
@@ -267,6 +312,7 @@ export default function App() {
             setPlaces([])
             setRoutePlaces([])
             setRoutePath(null)
+            setSelectedPlaces(new Set())
           }}
         />
 
@@ -277,9 +323,12 @@ export default function App() {
           places={places}
           routePlaces={routePlaces}
           routePath={routePath}
+          selectedPlaces={selectedPlaces}
+          onTogglePlace={toggleSelectedPlace}
         />
       </div>
 
+      {/* MOBILE */}
       <div className="md:hidden h-full">
         <MapView
           radius={radius}
@@ -288,6 +337,8 @@ export default function App() {
           places={places}
           routePlaces={routePlaces}
           routePath={routePath}
+          selectedPlaces={selectedPlaces}
+          onTogglePlace={toggleSelectedPlace}
           disabled={sidebarMode.type === "edit-category"}
         />
 
@@ -306,8 +357,9 @@ export default function App() {
             setSidebarMode({ type: "edit-category", category: id })
           }
           onSearchRoute={handleSearchRoute}
-          isSearchingRoute={isSearchingRoute}
+          onSearchRouteByPoints={handleSearchRouteByPoints}
           onSelectRecentRoute={handleSelectRecentRoute}
+          isSearchingRoute={isSearchingRoute}
           mode={mobileMode}
           onBack={() => setMobileMode("default")}
         />
@@ -320,6 +372,26 @@ export default function App() {
           />
         )}
       </div>
+
+      {/* NO POINTS POPUP */}
+      {noPointsPopup && (
+        <div className="fixed inset-0 z-9990 flex items-center justify-center bg-black/40">
+          <div className="bg-white rounded-lg p-6 w-[320px] text-center">
+            <div className="font-semibold mb-2">
+              Brak zaznaczonych punktów
+            </div>
+            <div className="text-sm text-gray-600 mb-4">
+              Zaznacz punkty na mapie, aby wyszukać trasę przez punkty.
+            </div>
+            <button
+              onClick={() => setNoPointsPopup(false)}
+              className="w-full py-2 rounded bg-green-600 text-white"
+            >
+              OK
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

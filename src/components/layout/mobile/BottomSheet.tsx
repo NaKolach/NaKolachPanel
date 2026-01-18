@@ -11,7 +11,10 @@ interface BottomSheetProps {
   onRadiusChange: (v: number) => void
   onToggleCategory: (id: string) => void
   onEditCategory: (id: string) => void
+
   onSearchRoute: () => Promise<void>
+  onSearchRouteByPoints: () => Promise<void>
+
   isSearchingRoute: boolean
   onSelectRecentRoute: (routeId: number) => void
   mode: "default" | "saved-routes"
@@ -30,6 +33,12 @@ export default function BottomSheet(props: BottomSheetProps) {
   const handleSearch = async () => {
     if (props.isSearchingRoute) return
     await props.onSearchRoute()
+    setState("collapsed")
+  }
+
+  const handleSearchByPoints = async () => {
+    if (props.isSearchingRoute) return
+    await props.onSearchRouteByPoints()
     setState("collapsed")
   }
 
@@ -65,7 +74,6 @@ export default function BottomSheet(props: BottomSheetProps) {
           <div className="flex flex-col gap-6">
             <div className="flex items-center gap-3 pt-2">
               <BackButton onClick={props.onBack} />
-
               <h2 className="text-base font-semibold text-gray-800 dark:text-gray-200">
                 Zapisane trasy
               </h2>
@@ -78,11 +86,12 @@ export default function BottomSheet(props: BottomSheetProps) {
             <RouteParams
               radius={props.radius}
               filters={props.filters}
+              isSearchingRoute={props.isSearchingRoute}
               onRadiusChange={props.onRadiusChange}
               onToggleCategory={props.onToggleCategory}
               onEditCategory={props.onEditCategory}
               onSearchRoute={handleSearch}
-              isSearchingRoute={props.isSearchingRoute}
+              onSearchRouteByPoints={handleSearchByPoints}
             />
           </div>
         )}

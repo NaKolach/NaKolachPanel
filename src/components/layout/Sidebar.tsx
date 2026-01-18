@@ -9,7 +9,6 @@ import type { User } from "../../data/user"
 import type { Category } from "../../data/category"
 import type { PinColorKey } from "../../data/pinColors"
 import type { BackendPlace } from "../../data/backendPlace"
-import type { GraphHopperResponse } from "../../data/graphhopper"
 
 type SidebarMode =
   | { type: "default" }
@@ -27,19 +26,16 @@ interface SidebarProps {
   onRadiusChange: (v: number) => void
   onToggleCategory: (id: string) => void
 
-  sidebarMode:
-    | { type: "default" }
-    | { type: "edit-category"; category: string }
-    | { type: "saved-routes" }
+  onSearchRoute: () => Promise<void>
+  onSearchRouteByPoints: () => Promise<void>
 
-
+  sidebarMode: SidebarMode
   setSidebarMode: (v: SidebarMode) => void
 
   onSelectRecentRoute: (routeId: number) => void
 
   categories: Category[]
   onSaveCategoryColor: (id: string, color: PinColorKey) => void
-  onSearchRoute: () => Promise<void>
 
   routePath: GraphHopperPath | null
   routePlaces: BackendPlace[]
@@ -71,10 +67,11 @@ export default function Sidebar(props: SidebarProps) {
             filters={props.filters}
             onRadiusChange={props.onRadiusChange}
             onToggleCategory={props.onToggleCategory}
-            onEditCategory={(id) =>
+            onEditCategory={id =>
               setSidebarMode({ type: "edit-category", category: id })
             }
             onSearchRoute={props.onSearchRoute}
+            onSearchRouteByPoints={props.onSearchRouteByPoints}
           />
 
           <SaveLastRouteButton
@@ -87,21 +84,19 @@ export default function Sidebar(props: SidebarProps) {
       {sidebarMode.type === "edit-category" && (
         <CategoryEditPanel
           category={
-            props.categories.find(
-              (c) => c.id === sidebarMode.category
-            )!
+            props.categories.find(c => c.id === sidebarMode.category)!
           }
           onSave={props.onSaveCategoryColor}
           onClose={() => setSidebarMode({ type: "default" })}
         />
       )}
+
       {sidebarMode.type === "saved-routes" && (
         <div className="flex flex-col gap-6">
           <div className="flex items-center gap-3">
             <BackButton
               onClick={() => setSidebarMode({ type: "default" })}
             />
-
             <h2 className="text-base font-semibold text-gray-800 dark:text-gray-200">
               Zapisane trasy
             </h2>
@@ -110,8 +105,6 @@ export default function Sidebar(props: SidebarProps) {
           <RecentRoutes onSelectRoute={props.onSelectRecentRoute} />
         </div>
       )}
-
-
     </aside>
   )
 }

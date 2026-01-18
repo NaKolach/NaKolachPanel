@@ -17,6 +17,8 @@ interface MapViewProps {
   places: BackendPlace[]
   routePlaces: BackendPlace[]
   routePath: any | null
+  selectedPlaces: Set<BackendPlace>
+  onTogglePlace: (place: BackendPlace) => void
   disabled?: boolean
 }
 
@@ -27,6 +29,8 @@ export default function MapView({
   places,
   routePlaces,
   routePath,
+  selectedPlaces,
+  onTogglePlace,
   disabled = false,
 }: MapViewProps) {
   const center: [number, number] = userLocation
@@ -37,10 +41,25 @@ export default function MapView({
     <main className={`h-full w-full ${disabled ? "pointer-events-none" : ""}`}>
       <MapContainer center={center} zoom={12} className="h-full w-full">
         <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+
         <UserLocation center={center} />
         <RadiusCircle center={center} radius={radius} />
-        <PlaceMarkers places={places} categories={categories} />
-        <PlaceMarkers places={routePlaces} categories={categories} />
+
+        {/* INTERAKTYWNE PUNKTY */}
+        <PlaceMarkers
+          places={places}
+          categories={categories}
+          selectedPlaces={selectedPlaces}
+          onTogglePlace={onTogglePlace}
+        />
+
+        {/* PUNKTY TRASY — READONLY */}
+        <PlaceMarkers
+          places={routePlaces}
+          categories={categories}
+          readonly
+        />
+
         <RoutePolyline path={routePath} />
       </MapContainer>
     </main>
