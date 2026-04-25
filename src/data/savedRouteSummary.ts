@@ -1,8 +1,7 @@
 export type SavedRouteSummary = {
-  id: number
+  id: string
   name: string
-  radius: number
-  length: number
+  time: number
+  distance: number
   categories: string[]
-  isAi: boolean
 }

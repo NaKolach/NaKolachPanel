@@ -25,6 +25,7 @@ type FiltersMap = Record<string, boolean>
 
 type RouteResponse = {
   paths: {
+    id: string
     distance: number
     time: number
     paths: [number, number][]
@@ -57,6 +58,8 @@ export default function App() {
   const [authChecked, setAuthChecked] = useState(false)
   const [mobileMode, setMobileMode] =
     useState<"default" | "saved-routes">("default")
+
+  const [routeId, setRouteId] = useState<string | null>()
 
   const [selectedPlaces, setSelectedPlaces] =
     useState<Set<BackendPlace>>(new Set())
@@ -199,8 +202,10 @@ export default function App() {
       params.append("longitude", userLocation.lng.toString())
       params.append("radius", (radius * METERS_PER_RADIUS_UNIT).toString())
 
-      const res = await api.get<RouteResponse>("/Routes", { params })
+      const res = await api.get<RouteResponse>("/Routes/auto", { params })
       const mainPath = res.data.paths[0]
+      setRouteId(mainPath.id)
+      console.log(routeId)
 
       if (mainPath) {
         setRoutePath(mainPath.paths)
@@ -213,24 +218,29 @@ export default function App() {
 
   // ---------- SEARCH BY POINTS ----------
   const handleSearchRouteByPoints = async () => {
-    if (selectedPlaces.size === 0) {
+    if (selectedPlaces.size === 0 || !userLocation) {
       setNoPointsPopup(true)
       return
     }
 
-    setIsSearchingRoute(true)
+    setSelectedPlaces(new Set())
+    setFilters(INITIAL_FILTERS)
+    setPlaces([])
     setRoutePath(null)
     setRoutePlaces([])
+    setIsSearchingRoute(true)
 
     try {
-      const payload = Array.from(selectedPlaces).map(p => p.id)
+      const params = new URLSearchParams()
+      params.append("latitude", userLocation.lat.toString())
+      params.append("longitude", userLocation.lng.toString())
+      Array.from(selectedPlaces).forEach(p => {
+        params.append("points", p.id.toString());
+      });
 
-      const res = await api.post<RouteResponse>(
-        "/Routes/by-points",
-        payload
-      )
-
+      const res = await api.get<RouteResponse>("/Routes/custom", { params })
       const mainPath = res.data.paths[0]
+      setRouteId(mainPath.id)
 
       if (mainPath) {
         setRoutePath(mainPath.paths)
@@ -259,7 +269,7 @@ export default function App() {
 
     try {
       await api.post("/auth/logout")
-    } catch {}
+    } catch { }
 
     setSelectedPlaces(new Set())
     setUser(null)
@@ -300,8 +310,7 @@ export default function App() {
           onSearchRoute={handleSearchRoute}
           onSearchRouteByPoints={handleSearchRouteByPoints}
           isSearchingRoute={isSearchingRoute}
-          routePath={routePath}
-          routePlaces={routePlaces}
+          routeId={routeId}
         />
 
         <MapResetController

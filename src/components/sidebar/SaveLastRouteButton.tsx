@@ -1,38 +1,22 @@
-import type { BackendPlace } from "../../data/backendPlace"
-
-type GraphHopperPath = [number, number][]
-
 interface SaveLastRouteButtonProps {
-  routePath: GraphHopperPath | null
-  routePlaces: BackendPlace[]
+  routeId: string | null | undefined
 }
 
-export default function SaveLastRouteButton({
-  routePath,
-  routePlaces,
-}: SaveLastRouteButtonProps) {
-  if (!routePath || routePath.length === 0) return null
 
-  const handleSave = () => {
-    const payload = {
-      savedAt: new Date().toISOString(),
-      path: routePath,
-      points: routePlaces,
-    }
-
-    const blob = new Blob(
-      [JSON.stringify(payload, null, 2)],
-      { type: "application/json" }
-    )
-
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement("a")
-    a.href = url
-    a.download = "testSave.json"
-    a.click()
-    URL.revokeObjectURL(url)
+export default function SaveLastRouteButton({ routeId }: SaveLastRouteButtonProps) {
+  console.log(routeId)
+  if (!routeId) return null
+  console.log(1)
+  const handleSave = async () => {
+    await fetch(`/api/routes/${routeId}/saved`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      }
+    })
   }
 
+  console.log(2)
   return (
     <button
       onClick={handleSave}

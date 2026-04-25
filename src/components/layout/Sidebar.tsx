@@ -37,8 +37,7 @@ interface SidebarProps {
   categories: Category[]
   onSaveCategoryColor: (id: string, color: PinColorKey) => void
 
-  routePath: GraphHopperPath | null
-  routePlaces: BackendPlace[]
+  routeId: string | null | undefined
 
   isSearchingRoute: boolean
 }
@@ -75,8 +74,7 @@ export default function Sidebar(props: SidebarProps) {
           />
 
           <SaveLastRouteButton
-            routePath={props.routePath}
-            routePlaces={props.routePlaces}
+            routeId={props.routeId}
           />
         </>
       )}

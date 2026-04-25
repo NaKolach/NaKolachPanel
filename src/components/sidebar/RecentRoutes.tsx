@@ -1,32 +1,68 @@
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import type { SavedRouteSummary } from "../../data/savedRouteSummary"
-import { MOCK_SAVED_ROUTES } from "../../data/mockSidebarSavedRoutes"
 
 interface RecentRoutesProps {
   onSelectRoute: (index: number) => void
 }
 
 export default function RecentRoutes({ onSelectRoute }: RecentRoutesProps) {
-  const [routes, setRoutes] = useState<SavedRouteSummary[]>(MOCK_SAVED_ROUTES)
-  const [editingId, setEditingId] = useState<number | null>(null)
+  const [routes, setRoutes] = useState<SavedRouteSummary[]>()
+  const [isLoading, setIsLoading] = useState(true)
+  const [editingId, setEditingId] = useState<string | null>(null)
   const [draftName, setDraftName] = useState("")
-  const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null)
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
+
+  useEffect(() => {
+    const fetchRoutes = async () => {
+      try {
+        const response = await fetch("/api/routes")
+
+        if (!response.ok) {
+          throw new Error("Błąd pobierania tras")
+        }
+
+        const data = await response.json()
+        setRoutes(data)
+      } catch (error) {
+        console.error("Nie udało się pobrać tras:", error)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    fetchRoutes()
+  }, [])
 
   const startEdit = (route: SavedRouteSummary) => {
     setEditingId(route.id)
     setDraftName(route.name)
   }
 
-  const commitEdit = () => {
+  const commitEdit = async () => {
     if (editingId === null) return
 
-    setRoutes(prev =>
-      prev.map(r =>
-        r.id === editingId && draftName.trim()
-          ? { ...r, name: draftName.trim() }
-          : r
-      )
-    )
+    try {
+      await fetch(`/api/routes/${editingId}/saved`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          name: draftName
+        })
+      })
+
+      const response = await fetch("/api/routes")
+
+      if (!response.ok) {
+        throw new Error("Błąd pobierania tras")
+      }
+
+      const data = await response.json()
+      setRoutes(data)
+    } catch (error) {
+      console.error("Błąd usuwania trasy z bazy:", error)
+    }
 
     setEditingId(null)
     setDraftName("")
@@ -37,22 +73,31 @@ export default function RecentRoutes({ onSelectRoute }: RecentRoutesProps) {
     setDraftName("")
   }
 
-  const confirmDelete = (routeId: number) => {
-    setRoutes(prev => prev.filter(r => r.id !== routeId))
+  const confirmDelete = async (routeId: string) => {
+    setRoutes(prev => {
+      if (!prev) return []
+      prev.filter(r => r.id !== routeId)
+    })
     setConfirmDeleteId(null)
+
+    try {
+      await fetch(`/api/routes/${routeId}/saved`, {
+        method: "DELETE"
+      })
+    } catch (error) {
+      console.error("Błąd usuwania trasy z bazy:", error)
+    }
   }
 
-  const saveAiRoute = (routeId: number) => {
-    setRoutes(prev =>
-      prev.map(r =>
-        r.id === routeId
-          ? { ...r, isAi: false }
-          : r
-      )
+  if (isLoading) {
+    return (
+      <div className="py-6 text-sm text-gray-500 dark:text-gray-400 animate-pulse">
+        Ładowanie zapisanych tras...
+      </div>
     )
   }
 
-  if (routes.length === 0) {
+  if (routes?.length === 0) {
     return (
       <div className="py-6 text-sm text-gray-500 dark:text-gray-400">
         Brak zapisanych tras
@@ -62,7 +107,7 @@ export default function RecentRoutes({ onSelectRoute }: RecentRoutesProps) {
 
   return (
     <div className="flex flex-col gap-2 py-4">
-      {routes.map((route, index) => (
+      {routes?.map((route, index) => (
         <div
           key={route.id}
           className="
@@ -106,49 +151,24 @@ export default function RecentRoutes({ onSelectRoute }: RecentRoutesProps) {
             </div>
 
             <div className="flex items-center gap-2">
-              {route.isAi && (
-                <span className="text-xs font-semibold text-blue-600 dark:text-blue-400">
-                  AI
-                </span>
-              )}
-
-              {!route.isAi && (
-                <button
-                  onClick={() => startEdit(route)}
-                  className="text-xs text-gray-500 hover:text-gray-800 dark:hover:text-gray-200"
-                >
-                  ✎
-                </button>
-              )}
-
-              {route.isAi ? (
-                <button
-                  onClick={() => saveAiRoute(route.id)}
-                  className="
-                    text-xs
-                    px-2 py-1
-                    rounded-md
-                    bg-green-600
-                    text-white
-                    hover:bg-green-700
-                  "
-                >
-                  Zapisz
-                </button>
-              ) : (
-                <button
-                  onClick={() => setConfirmDeleteId(route.id)}
-                  className="text-xs text-red-500 hover:text-red-700"
-                >
-                  ✕
-                </button>
-              )}
+              <button
+                onClick={() => startEdit(route)}
+                className="text-xs text-gray-500 hover:text-gray-800 dark:hover:text-gray-200"
+              >
+                ✎
+              </button>
+              <button
+                onClick={() => setConfirmDeleteId(route.id)}
+                className="text-xs text-red-500 hover:text-red-700"
+              >
+                ✕
+              </button>
             </div>
           </div>
 
           {/* DÓŁ */}
           <div className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-            {route.length} km · {route.categories.join(", ")}
+            {route.distance} km · {route.categories.join(", ")}
           </div>
 
           {/* POTWIERDZENIE USUNIĘCIA */}
