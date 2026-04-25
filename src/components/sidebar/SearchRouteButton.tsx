@@ -1,6 +1,5 @@
 import ActionButton from "../sidebar/ActionButton"
 import { useActionRequest } from "../../hooks/useActionRequest"
-import type { Category } from "../../data/category"
 
 type SearchRoutePayload = {
   radius: number

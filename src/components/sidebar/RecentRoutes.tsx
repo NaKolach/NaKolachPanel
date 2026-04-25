@@ -168,7 +168,7 @@ export default function RecentRoutes({ onSelectRoute }: RecentRoutesProps) {
 
           {/* DÓŁ */}
           <div className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-            {route.distance} km · {route.categories.join(", ")}
+            {Math.round(route.distance/1000)} km · {route.categories.join(", ")}
           </div>
 
           {/* POTWIERDZENIE USUNIĘCIA */}
