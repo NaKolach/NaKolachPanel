@@ -1,88 +1,95 @@
-import UserPanel from "../sidebar/UserPanel"
-import RecentRoutes from "../sidebar/RecentRoutes"
-import RouteParams from "../sidebar/RouteParams"
-import CategoryEditPanel from "../sidebar/CategoryEditPanel"
-import SavedRoutesButton from "../sidebar/SavedRoutesButton"
-import BackButton from "../sidebar/BackButton"
-import SaveLastRouteButton from "../sidebar/SaveLastRouteButton"
-import type { User } from "../../data/user"
-import type { Category } from "../../data/category"
-import type { PinColorKey } from "../../data/pinColors"
-import type { BackendPlace } from "../../data/backendPlace"
+import UserPanel from "../sidebar/UserPanel";
+import RecentRoutes from "../sidebar/RecentRoutes";
+import RouteParams from "../sidebar/RouteParams";
+import CategoryEditPanel from "../sidebar/CategoryEditPanel";
+import SavedRoutesButton from "../sidebar/SavedRoutesButton";
+import BackButton from "../sidebar/BackButton";
+import SaveLastRouteButton from "../sidebar/SaveLastRouteButton";
+import type { User } from "../../data/user";
+import type { Category } from "../../data/category";
+import type { PinColorKey } from "../../data/pinColors";
+import type { BackendPlace } from "../../data/backendPlace";
+import { useState } from "react";
+import type { PathProfile } from "../Types/PathProfile";
+import PathProfileContent from "../sidebar/PathProfileContent";
 
 type SidebarMode =
   | { type: "default" }
   | { type: "edit-category"; category: string }
   | { type: "saved-routes" }
+  | { type: "switching-paths" };
 
-type GraphHopperPath = [number, number][]
+type GraphHopperPath = [number, number][];
 
 interface SidebarProps {
-  user: User
-  onLogout: () => void
+  user: User;
+  onLogout: () => void;
 
-  radius: number
-  filters: Record<string, boolean>
-  onRadiusChange: (v: number) => void
-  onToggleCategory: (id: string) => void
+  radius: number;
+  filters: Record<string, boolean>;
+  onRadiusChange: (v: number) => void;
+  onToggleCategory: (id: string) => void;
 
-  onSearchRoute: () => Promise<void>
-  onSearchRouteByPoints: () => Promise<void>
+  onSearchRoute: () => Promise<void>;
+  onSearchRouteByPoints: () => Promise<void>;
 
-  sidebarMode: SidebarMode
-  setSidebarMode: (v: SidebarMode) => void
+  sidebarMode: SidebarMode;
+  setSidebarMode: (v: SidebarMode) => void;
 
-  onSelectRecentRoute: (routeId: number) => void
+  onSelectRecentRoute: (routeId: number) => void;
 
-  categories: Category[]
-  onSaveCategoryColor: (id: string, color: PinColorKey) => void
+  categories: Category[];
+  onSaveCategoryColor: (id: string, color: PinColorKey) => void;
 
-  routeId: string | null | undefined
+  routeId: string | null | undefined;
 
-  isSearchingRoute: boolean
+  isSearchingRoute: boolean;
+
+  pathProfile: PathProfile;
+
+  setPathProfile: (v: PathProfile) => void;
 }
 
 export default function Sidebar(props: SidebarProps) {
-  const { sidebarMode, setSidebarMode } = props
+  const { sidebarMode, setSidebarMode, pathProfile, setPathProfile } = props;
 
   return (
-    <aside className="w-[30%] max-w-[350px] h-full bg-gray-200 dark:bg-gray-800 border-r p-6 flex flex-col">
+    <aside className="w-[30%] max-w-[350px] h-full bg-gray-200 dark:bg-gray-800 text-gray-900 dark:text-gray-100 border-r p-6 flex flex-col">
       {sidebarMode.type === "default" && (
         <>
-          <UserPanel
-            login={props.user.login}
-            onLogout={props.onLogout}
-          />
-
+          <UserPanel login={props.user.login} onLogout={props.onLogout} />
           <div className="py-4">
             <SavedRoutesButton
               onClick={() => setSidebarMode({ type: "saved-routes" })}
             />
           </div>
-
+          <div>
+            <h1 className="mb-2">Wybierz profil trasy:</h1>
+            <PathProfileContent
+              pathProfile={pathProfile}
+              setPathProfile={setPathProfile}
+            />
+          </div>
           <RouteParams
             isSearchingRoute={props.isSearchingRoute}
             radius={props.radius}
             filters={props.filters}
             onRadiusChange={props.onRadiusChange}
             onToggleCategory={props.onToggleCategory}
-            onEditCategory={id =>
+            onEditCategory={(id) =>
               setSidebarMode({ type: "edit-category", category: id })
             }
             onSearchRoute={props.onSearchRoute}
             onSearchRouteByPoints={props.onSearchRouteByPoints}
           />
-
-          <SaveLastRouteButton
-            routeId={props.routeId}
-          />
+          <SaveLastRouteButton routeId={props.routeId} />
         </>
       )}
 
       {sidebarMode.type === "edit-category" && (
         <CategoryEditPanel
           category={
-            props.categories.find(c => c.id === sidebarMode.category)!
+            props.categories.find((c) => c.id === sidebarMode.category)!
           }
           onSave={props.onSaveCategoryColor}
           onClose={() => setSidebarMode({ type: "default" })}
@@ -92,9 +99,7 @@ export default function Sidebar(props: SidebarProps) {
       {sidebarMode.type === "saved-routes" && (
         <div className="flex flex-col gap-6">
           <div className="flex items-center gap-3">
-            <BackButton
-              onClick={() => setSidebarMode({ type: "default" })}
-            />
+            <BackButton onClick={() => setSidebarMode({ type: "default" })} />
             <h2 className="text-base font-semibold text-gray-800 dark:text-gray-200">
               Zapisane trasy
             </h2>
@@ -104,5 +109,5 @@ export default function Sidebar(props: SidebarProps) {
         </div>
       )}
     </aside>
-  )
+  );
 }
