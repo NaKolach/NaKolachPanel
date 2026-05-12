@@ -1,25 +1,28 @@
-import { MapContainer, TileLayer } from "react-leaflet"
-import UserLocation from "../map/UserLocation"
-import RadiusCircle from "../map/RadiusCircle"
-import PlaceMarkers from "../map/PlaceMarkers"
-import RoutePolyline from "../map/RoutePolyline"
-import type { Category } from "../../data/category"
-import type { BackendPlace } from "../../data/backendPlace"
+import { MapContainer, TileLayer } from "react-leaflet";
+import UserLocation from "../map/UserLocation";
+import RadiusCircle from "../map/RadiusCircle";
+import PlaceMarkers from "../map/PlaceMarkers";
+import RoutePolyline from "../map/RoutePolyline";
+import type { Category } from "../../data/category";
+import type { BackendPlace } from "../../data/backendPlace";
 
-type LatLng = { lat: number; lng: number }
+type LatLng = { lat: number; lng: number };
 
-const DEFAULT_CENTER: [number, number] = [54.37167, 18.61236]
+const DEFAULT_CENTER: [number, number] = [54.37167, 18.61236];
 
 interface MapViewProps {
-  radius: number
-  categories: Category[]
-  userLocation: LatLng | null
-  places: BackendPlace[]
-  routePlaces: BackendPlace[]
-  routePath: any | null
-  selectedPlaces: Set<BackendPlace>
-  onTogglePlace: (place: BackendPlace) => void
-  disabled?: boolean
+  radius: number;
+  categories: Category[];
+  userLocation: LatLng | null;
+  places: BackendPlace[];
+  routePlaces: BackendPlace[][];
+  // Teraz to tablica tras (tablica tablic współrzędnych)
+  routePath: [number, number][][];
+  // Indeks aktualnie wybranej trasy
+  selectedRouteIndex: number;
+  selectedPlaces: Set<BackendPlace>;
+  onTogglePlace: (place: BackendPlace) => void;
+  disabled?: boolean;
 }
 
 export default function MapView({
@@ -29,13 +32,14 @@ export default function MapView({
   places,
   routePlaces,
   routePath,
+  selectedRouteIndex,
   selectedPlaces,
   onTogglePlace,
   disabled = false,
 }: MapViewProps) {
   const center: [number, number] = userLocation
     ? [userLocation.lat, userLocation.lng]
-    : DEFAULT_CENTER
+    : DEFAULT_CENTER;
 
   return (
     <main className={`h-full w-full ${disabled ? "pointer-events-none" : ""}`}>
@@ -53,15 +57,20 @@ export default function MapView({
           onTogglePlace={onTogglePlace}
         />
 
-        {/* PUNKTY TRASY — READONLY */}
-        <PlaceMarkers
-          places={routePlaces}
-          categories={categories}
-          readonly
-        />
+        {/* PUNKTY WYBRANEJ TRASY — READONLY */}
+        {routePlaces && routePlaces[selectedRouteIndex] && (
+          <PlaceMarkers
+            places={routePlaces[selectedRouteIndex]} // Wybieramy konkretną paczkę pinów
+            categories={categories}
+            readonly
+          />
+        )}
 
-        <RoutePolyline path={routePath} />
+        {/* RYSOWANIE WYBRANEJ TRASY */}
+        {routePath && routePath.length > 0 && routePath[selectedRouteIndex] && (
+          <RoutePolyline path={routePath[selectedRouteIndex]} />
+        )}
       </MapContainer>
     </main>
-  )
+  );
 }

@@ -53,6 +53,14 @@ interface SidebarProps {
   chosingRoute: boolean;
 
   setChosingRoute: (v: boolean) => void;
+
+  selectedRouteIndex: number;
+
+  setSelectedRouteIndex: (v: number) => void;
+
+  distance: number[];
+
+  handleExitChosingRoute: () => void;
 }
 
 export default function Sidebar(props: SidebarProps) {
@@ -67,8 +75,14 @@ export default function Sidebar(props: SidebarProps) {
   return (
     <aside className="w-[30%] max-w-[350px] h-full bg-gray-200 dark:bg-gray-800 text-gray-900 dark:text-gray-100 border-r p-6 flex flex-col">
       {chosingRoute ? (
-        //<ChosingRoute setChosingRoute={props.setChosingRoute} />
-        <div className="flex flex-col gap-5"></div>
+        <ChosingRoute
+          setChosingRoute={props.setChosingRoute}
+          selectedRouteIndex={props.selectedRouteIndex}
+          setSelectedRouteIndex={props.setSelectedRouteIndex}
+          distance={props.distance}
+          routeId={props.routeId}
+          handleExitChosingRoute={props.handleExitChosingRoute}
+        />
       ) : (
         <>
           {sidebarMode.type === "default" && (

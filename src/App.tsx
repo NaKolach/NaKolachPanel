@@ -49,12 +49,14 @@ export default function App() {
 
   const [filters, setFilters] = useState<FiltersMap>(INITIAL_FILTERS);
   const [places, setPlaces] = useState<BackendPlace[]>([]);
-  const [routePlaces, setRoutePlaces] = useState<BackendPlace[]>([]);
-  const [routePath, setRoutePath] = useState<GraphHopperPath | null>(null);
+  const [routePlaces, setRoutePlaces] = useState<BackendPlace[][]>([]);
+  const [routePath, setRoutePath] = useState<GraphHopperPath[]>([]);
   const [user, setUser] = useState<User | null>(null);
   const [userLocation, setUserLocation] = useState<LatLng | null>(null);
   const [categories, setCategories] = useState<Category[]>(CATEGORIES);
   const [chosingRoute, setChosingRoute] = useState(false);
+  const [selectedRouteIndex, setSelectedRouteIndex] = useState(0);
+  const [distance, setDistance] = useState<number[]>([]);
 
   const [sidebarMode, setSidebarMode] = useState<SidebarMode>({
     type: "default",
@@ -66,6 +68,7 @@ export default function App() {
   );
 
   const [routeId, setRouteId] = useState<string | null>();
+  const [routeIds, setRouteIds] = useState<string[]>([]);
 
   const [selectedPlaces, setSelectedPlaces] = useState<Set<BackendPlace>>(
     new Set(),
@@ -121,8 +124,11 @@ export default function App() {
 
   // ---------- RESET ROUTE ----------
   useEffect(() => {
-    setRoutePath(null);
+    setRoutePath([]);
     setRoutePlaces([]);
+    setRouteIds([]);
+    setDistance([]);
+    setSelectedRouteIndex(0);
   }, [filters, debouncedRadius]);
 
   // ---------- CATEGORY COLOR ----------
@@ -196,9 +202,10 @@ export default function App() {
     setSelectedPlaces(new Set());
     setFilters(INITIAL_FILTERS);
     setPlaces([]);
-    setRoutePath(null);
+    setRoutePath([]);
     setRoutePlaces([]);
     setIsSearchingRoute(true);
+    setSelectedRouteIndex(0);
 
     try {
       const params = new URLSearchParams();
@@ -212,18 +219,30 @@ export default function App() {
       params.append("radius", (radius * METERS_PER_RADIUS_UNIT).toString());
 
       const res = await api.get<RouteResponse>("/Routes/auto", { params });
-      const mainPath = res.data.paths[0];
-      setRouteId(mainPath.id);
-      console.log(routeId);
+      const top3Routes = res.data.paths.slice(0, 3);
+      const distances = top3Routes.map((route) =>
+        Number((route.distance / 1000).toFixed(1)),
+      );
 
-      if (mainPath) {
-        setRoutePath(mainPath.paths);
-        setRoutePlaces(mainPath.points);
+      if (top3Routes.length > 0) {
+        setRouteIds(top3Routes.map((r) => r.id));
+        setDistance(distances);
+        setRoutePath(top3Routes.map((route) => route.paths));
+        setRoutePlaces(top3Routes.map((route) => route.points));
       }
     } finally {
       setIsSearchingRoute(false);
     }
   };
+
+  // Zmiana Id przy zmianie wybranej trasy
+  useEffect(() => {
+    if (routeIds.length > 0 && routeIds[selectedRouteIndex]) {
+      setRouteId(routeIds[selectedRouteIndex]);
+    } else {
+      setRouteId(null);
+    }
+  }, [selectedRouteIndex, routeIds]);
 
   // ---------- SEARCH BY POINTS ----------
   const handleSearchRouteByPoints = async () => {
@@ -235,7 +254,7 @@ export default function App() {
     setSelectedPlaces(new Set());
     setFilters(INITIAL_FILTERS);
     setPlaces([]);
-    setRoutePath(null);
+    setRoutePath([]);
     setRoutePlaces([]);
     setIsSearchingRoute(true);
 
@@ -249,12 +268,12 @@ export default function App() {
       });
 
       const res = await api.get<RouteResponse>("/Routes/custom", { params });
-      const mainPath = res.data.paths[0];
-      setRouteId(mainPath.id);
+      const top3Routes = res.data.paths.slice(0, 3);
 
-      if (mainPath) {
-        setRoutePath(mainPath.paths);
-        setRoutePlaces(mainPath.points);
+      if (top3Routes.length > 0) {
+        setRouteId(top3Routes[0].id);
+        setRoutePath(top3Routes.map((route) => route.paths));
+        setRoutePlaces(top3Routes.map((route) => route.points));
       }
     } finally {
       setIsSearchingRoute(false);
@@ -285,7 +304,7 @@ export default function App() {
     setUser(null);
     setPlaces([]);
     setRoutePlaces([]);
-    setRoutePath(null);
+    setRoutePath([]);
     setFilters(INITIAL_FILTERS);
     setSidebarMode({ type: "default" });
   };
@@ -301,6 +320,21 @@ export default function App() {
         }}
       />
     );
+
+  // Czyszczenie przy wyjsciu z Formularza wyboru trasy
+  const handleExitChosingRoute = () => {
+    setChosingRoute(false);
+
+    setRoutePath([]);
+    setRoutePlaces([]);
+    setRouteIds([]);
+    setDistance([]);
+    setSelectedRouteIndex(0);
+    setRouteId(null);
+
+    setFilters(INITIAL_FILTERS);
+    setSelectedPlaces(new Set());
+  };
 
   return (
     <div className="h-screen w-screen overflow-hidden">
@@ -324,8 +358,12 @@ export default function App() {
           routeId={routeId}
           pathProfile={pathProfile}
           setPathProfile={setPathProfile}
+          selectedRouteIndex={selectedRouteIndex}
+          setSelectedRouteIndex={setSelectedRouteIndex}
           chosingRoute={chosingRoute}
           setChosingRoute={setChosingRoute}
+          distance={distance}
+          handleExitChosingRoute={handleExitChosingRoute}
         />
 
         <MapResetController
@@ -335,7 +373,7 @@ export default function App() {
             pointsAbortRef.current.clear();
             setPlaces([]);
             setRoutePlaces([]);
-            setRoutePath(null);
+            setRoutePath([]);
             setSelectedPlaces(new Set());
           }}
         />
@@ -347,6 +385,7 @@ export default function App() {
           places={places}
           routePlaces={routePlaces}
           routePath={routePath}
+          selectedRouteIndex={selectedRouteIndex}
           selectedPlaces={selectedPlaces}
           onTogglePlace={toggleSelectedPlace}
         />
@@ -361,6 +400,7 @@ export default function App() {
           places={places}
           routePlaces={routePlaces}
           routePath={routePath}
+          selectedRouteIndex={selectedRouteIndex}
           selectedPlaces={selectedPlaces}
           onTogglePlace={toggleSelectedPlace}
           disabled={sidebarMode.type === "edit-category"}
