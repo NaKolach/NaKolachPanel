@@ -12,6 +12,7 @@ import type { BackendPlace } from "../../data/backendPlace";
 import { useState } from "react";
 import type { PathProfile } from "../Types/PathProfile";
 import PathProfileContent from "../sidebar/PathProfileContent";
+import ChosingRoute from "../sidebar/ChosingRoute";
 
 type SidebarMode =
   | { type: "default" }
@@ -48,65 +49,83 @@ interface SidebarProps {
   pathProfile: PathProfile;
 
   setPathProfile: (v: PathProfile) => void;
+
+  chosingRoute: boolean;
+
+  setChosingRoute: (v: boolean) => void;
 }
 
 export default function Sidebar(props: SidebarProps) {
-  const { sidebarMode, setSidebarMode, pathProfile, setPathProfile } = props;
+  const {
+    sidebarMode,
+    setSidebarMode,
+    pathProfile,
+    setPathProfile,
+    chosingRoute,
+  } = props;
 
   return (
     <aside className="w-[30%] max-w-[350px] h-full bg-gray-200 dark:bg-gray-800 text-gray-900 dark:text-gray-100 border-r p-6 flex flex-col">
-      {sidebarMode.type === "default" && (
+      {chosingRoute ? (
+        //<ChosingRoute setChosingRoute={props.setChosingRoute} />
+        <div className="flex flex-col gap-5"></div>
+      ) : (
         <>
-          <UserPanel login={props.user.login} onLogout={props.onLogout} />
-          <div className="py-4">
-            <SavedRoutesButton
-              onClick={() => setSidebarMode({ type: "saved-routes" })}
+          {sidebarMode.type === "default" && (
+            <>
+              <UserPanel login={props.user.login} onLogout={props.onLogout} />
+              <div className="py-4">
+                <SavedRoutesButton
+                  onClick={() => setSidebarMode({ type: "saved-routes" })}
+                />
+              </div>
+              <div>
+                <h1 className="mb-2">Wybierz profil trasy:</h1>
+                <PathProfileContent
+                  pathProfile={pathProfile}
+                  setPathProfile={setPathProfile}
+                />
+              </div>
+              <RouteParams
+                isSearchingRoute={props.isSearchingRoute}
+                radius={props.radius}
+                filters={props.filters}
+                onRadiusChange={props.onRadiusChange}
+                onToggleCategory={props.onToggleCategory}
+                onEditCategory={(id) =>
+                  setSidebarMode({ type: "edit-category", category: id })
+                }
+                onSearchRoute={props.onSearchRoute}
+                onSearchRouteByPoints={props.onSearchRouteByPoints}
+                setChosingRoute={props.setChosingRoute}
+              />
+              <SaveLastRouteButton routeId={props.routeId} />
+            </>
+          )}
+          {sidebarMode.type === "edit-category" && (
+            <CategoryEditPanel
+              category={
+                props.categories.find((c) => c.id === sidebarMode.category)!
+              }
+              onSave={props.onSaveCategoryColor}
+              onClose={() => setSidebarMode({ type: "default" })}
             />
-          </div>
-          <div>
-            <h1 className="mb-2">Wybierz profil trasy:</h1>
-            <PathProfileContent
-              pathProfile={pathProfile}
-              setPathProfile={setPathProfile}
-            />
-          </div>
-          <RouteParams
-            isSearchingRoute={props.isSearchingRoute}
-            radius={props.radius}
-            filters={props.filters}
-            onRadiusChange={props.onRadiusChange}
-            onToggleCategory={props.onToggleCategory}
-            onEditCategory={(id) =>
-              setSidebarMode({ type: "edit-category", category: id })
-            }
-            onSearchRoute={props.onSearchRoute}
-            onSearchRouteByPoints={props.onSearchRouteByPoints}
-          />
-          <SaveLastRouteButton routeId={props.routeId} />
+          )}
+          {sidebarMode.type === "saved-routes" && (
+            <div className="flex flex-col gap-6">
+              <div className="flex items-center gap-3">
+                <BackButton
+                  onClick={() => setSidebarMode({ type: "default" })}
+                />
+                <h2 className="text-base font-semibold text-gray-800 dark:text-gray-200">
+                  Zapisane trasy
+                </h2>
+              </div>
+
+              <RecentRoutes onSelectRoute={props.onSelectRecentRoute} />
+            </div>
+          )}
         </>
-      )}
-
-      {sidebarMode.type === "edit-category" && (
-        <CategoryEditPanel
-          category={
-            props.categories.find((c) => c.id === sidebarMode.category)!
-          }
-          onSave={props.onSaveCategoryColor}
-          onClose={() => setSidebarMode({ type: "default" })}
-        />
-      )}
-
-      {sidebarMode.type === "saved-routes" && (
-        <div className="flex flex-col gap-6">
-          <div className="flex items-center gap-3">
-            <BackButton onClick={() => setSidebarMode({ type: "default" })} />
-            <h2 className="text-base font-semibold text-gray-800 dark:text-gray-200">
-              Zapisane trasy
-            </h2>
-          </div>
-
-          <RecentRoutes onSelectRoute={props.onSelectRecentRoute} />
-        </div>
       )}
     </aside>
   );

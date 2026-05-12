@@ -54,6 +54,7 @@ export default function App() {
   const [user, setUser] = useState<User | null>(null);
   const [userLocation, setUserLocation] = useState<LatLng | null>(null);
   const [categories, setCategories] = useState<Category[]>(CATEGORIES);
+  const [chosingRoute, setChosingRoute] = useState(false);
 
   const [sidebarMode, setSidebarMode] = useState<SidebarMode>({
     type: "default",
@@ -323,6 +324,8 @@ export default function App() {
           routeId={routeId}
           pathProfile={pathProfile}
           setPathProfile={setPathProfile}
+          chosingRoute={chosingRoute}
+          setChosingRoute={setChosingRoute}
         />
 
         <MapResetController

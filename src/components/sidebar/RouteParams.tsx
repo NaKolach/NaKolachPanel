@@ -1,19 +1,20 @@
-import { CATEGORIES } from "../../data/categories"
-import CategoryFilter from "./CategoryFilter"
-import ActionButton from "../sidebar/ActionButton"
+import { CATEGORIES } from "../../data/categories";
+import CategoryFilter from "./CategoryFilter";
+import ActionButton from "../sidebar/ActionButton";
 
 type RouteParamsProps = {
-  radius: number
-  filters: Record<string, boolean>
-  isSearchingRoute: boolean
+  radius: number;
+  filters: Record<string, boolean>;
+  isSearchingRoute: boolean;
 
-  onRadiusChange: (v: number) => void
-  onToggleCategory: (id: string) => void
-  onEditCategory: (id: string) => void
+  onRadiusChange: (v: number) => void;
+  onToggleCategory: (id: string) => void;
+  onEditCategory: (id: string) => void;
 
-  onSearchRoute: () => Promise<void>
-  onSearchRouteByPoints: () => Promise<void>
-}
+  onSearchRoute: () => Promise<void>;
+  onSearchRouteByPoints: () => Promise<void>;
+  setChosingRoute: (v: boolean) => void;
+};
 
 export default function RouteParams({
   radius,
@@ -24,23 +25,22 @@ export default function RouteParams({
   onEditCategory,
   onSearchRoute,
   onSearchRouteByPoints,
+  setChosingRoute,
 }: RouteParamsProps) {
-  const allSelected = Object.values(filters).every(v => v)
+  const allSelected = Object.values(filters).every((v) => v);
 
   const handleToggleAll = () => {
-    Object.keys(filters).forEach(id => {
+    Object.keys(filters).forEach((id) => {
       if (filters[id] !== !allSelected) {
-        onToggleCategory(id)
+        onToggleCategory(id);
       }
-    })
-  }
+    });
+  };
 
   return (
     <div className="flex flex-col text-gray-900 dark:text-gray-100">
       {/* HEADER */}
-      <div className="font-semibold mb-2">
-        Parametry Trasy
-      </div>
+      <div className="font-semibold mb-2">Parametry Trasy</div>
 
       {/* RADIUS */}
       <label className="text-sm text-gray-700 dark:text-gray-300 mb-1">
@@ -53,7 +53,7 @@ export default function RouteParams({
         min={1}
         max={15}
         value={radius}
-        onChange={e => onRadiusChange(+e.target.value)}
+        onChange={(e) => onRadiusChange(+e.target.value)}
         className="w-full accent-green-600 dark:accent-green-500 mb-3"
       />
 
@@ -77,7 +77,7 @@ export default function RouteParams({
 
       {/* CATEGORY LIST */}
       <div className="overflow-y-auto rounded-md pr-1 max-h-[45vh]">
-        {CATEGORIES.map(cat => (
+        {CATEGORIES.map((cat) => (
           <CategoryFilter
             key={cat.id}
             label={cat.label}
@@ -95,7 +95,10 @@ export default function RouteParams({
           label="Szukaj trasę"
           loadingLabel="Szukam trasy…"
           loading={isSearchingRoute}
-          onClick={onSearchRoute}
+          onClick={() => {
+            onSearchRoute();
+            setChosingRoute(true);
+          }}
         />
 
         <ActionButton
@@ -106,5 +109,5 @@ export default function RouteParams({
         />
       </div>
     </div>
-  )
+  );
 }
