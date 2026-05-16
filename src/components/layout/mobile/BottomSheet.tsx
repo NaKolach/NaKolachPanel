@@ -1,51 +1,53 @@
-import { useState } from "react"
-import RouteParams from "../../sidebar/RouteParams"
-import RecentRoutes from "../../sidebar/RecentRoutes"
-import BackButton from "../../sidebar/BackButton"
+import { useState } from "react";
+import RouteParams from "../../sidebar/RouteParams";
+import RecentRoutes from "../../sidebar/RecentRoutes";
+import BackButton from "../../sidebar/BackButton";
 
-type SheetState = "collapsed" | "half" | "expanded"
+type SheetState = "collapsed" | "half" | "expanded";
 
 interface BottomSheetProps {
-  radius: number
-  filters: Record<string, boolean>
-  onRadiusChange: (v: number) => void
-  onToggleCategory: (id: string) => void
-  onEditCategory: (id: string) => void
+  radius: number;
+  filters: Record<string, boolean>;
+  onRadiusChange: (v: number) => void;
+  onToggleCategory: (id: string) => void;
+  onEditCategory: (id: string) => void;
 
-  onSearchRoute: () => Promise<void>
-  onSearchRouteByPoints: () => Promise<void>
+  onSearchRoute: () => Promise<void>;
+  onSearchRouteByPoints: () => Promise<void>;
 
-  isSearchingRoute: boolean
-  onSelectRecentRoute: (routeId: number) => void
-  mode: "default" | "saved-routes"
-  onBack: () => void
+  isSearchingRoute: boolean;
+  onSelectRecentRoute: (routeId: string) => void;
+  mode: "default" | "saved-routes";
+  onBack: () => void;
+  setChosingRoute: (chosingRoute: boolean) => void;
+  handleExitChosingRoute: () => void;
 }
 
 const translateMap: Record<SheetState, string> = {
   collapsed: "translate-y-[70%]",
   half: "translate-y-[40%]",
   expanded: "translate-y-0",
-}
+};
 
 export default function BottomSheet(props: BottomSheetProps) {
-  const [state, setState] = useState<SheetState>("collapsed")
+  const [state, setState] = useState<SheetState>("collapsed");
 
   const handleSearch = async () => {
-    if (props.isSearchingRoute) return
-    await props.onSearchRoute()
-    setState("collapsed")
-  }
+    if (props.isSearchingRoute) return;
+    await props.onSearchRoute();
+    setState("collapsed");
+  };
 
   const handleSearchByPoints = async () => {
-    if (props.isSearchingRoute) return
-    await props.onSearchRouteByPoints()
-    setState("collapsed")
-  }
+    if (props.isSearchingRoute) return;
+    await props.onSearchRouteByPoints();
+    setState("collapsed");
+  };
 
   return (
     <div
       className={`
-        fixed bottom-0 left-0 right-0 z-1000
+        fixed bottom-0 left-0 right-0 z-[1000]
         bg-white dark:bg-gray-800
         rounded-t-2xl shadow-xl
         transition-transform duration-300 ease-out
@@ -55,12 +57,12 @@ export default function BottomSheet(props: BottomSheetProps) {
       {/* DRAG HANDLE */}
       <div
         onClick={() =>
-          setState(s =>
+          setState((s) =>
             s === "collapsed"
               ? "half"
               : s === "half"
-              ? "expanded"
-              : "collapsed"
+                ? "expanded"
+                : "collapsed",
           )
         }
         className="flex justify-center py-2 cursor-pointer"
@@ -92,10 +94,11 @@ export default function BottomSheet(props: BottomSheetProps) {
               onEditCategory={props.onEditCategory}
               onSearchRoute={handleSearch}
               onSearchRouteByPoints={handleSearchByPoints}
+              setChosingRoute={props.setChosingRoute}
             />
           </div>
         )}
       </div>
     </div>
-  )
+  );
 }

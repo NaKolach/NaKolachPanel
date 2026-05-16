@@ -281,14 +281,28 @@ export default function App() {
   };
 
   // ---------- RECENT ROUTE ----------
-  const handleSelectRecentRoute = (routeId: number) => {
+  const handleSelectRecentRoute = async (routeId: string) => {
     pointsAbortRef.current.forEach((c) => c.abort());
     pointsAbortRef.current.clear();
 
     setFilters(INITIAL_FILTERS);
     setPlaces([]);
 
-    // TODO: GET /Routes/{routeId}
+    try {
+      const response = await fetch(`/api/routes/${routeId}`);
+      if (!response.ok) throw new Error("Błąd serwera");
+      const data = await response.json();
+      const routeData = data.paths;
+
+      setRouteIds([routeData.id]);
+      setRoutePath([routeData.paths]);
+      setRoutePlaces([routeData.points]);
+      setDistance([Number((routeData.distance / 1000).toFixed(1))]);
+
+      setSelectedRouteIndex(0);
+    } catch (error) {
+      console.error("Błąd podczas ładowania zapisanej trasy:", error);
+    }
   };
 
   // ---------- LOGOUT ----------
@@ -426,6 +440,8 @@ export default function App() {
           isSearchingRoute={isSearchingRoute}
           mode={mobileMode}
           onBack={() => setMobileMode("default")}
+          setChosingRoute={setChosingRoute}
+          handleExitChosingRoute={handleExitChosingRoute}
         />
 
         {sidebarMode.type === "edit-category" && (

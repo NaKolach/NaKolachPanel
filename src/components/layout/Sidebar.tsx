@@ -8,8 +8,6 @@ import SaveLastRouteButton from "../sidebar/SaveLastRouteButton";
 import type { User } from "../../data/user";
 import type { Category } from "../../data/category";
 import type { PinColorKey } from "../../data/pinColors";
-import type { BackendPlace } from "../../data/backendPlace";
-import { useState } from "react";
 import type { PathProfile } from "../Types/PathProfile";
 import PathProfileContent from "../sidebar/PathProfileContent";
 import ChosingRoute from "../sidebar/ChosingRoute";
@@ -37,7 +35,7 @@ interface SidebarProps {
   sidebarMode: SidebarMode;
   setSidebarMode: (v: SidebarMode) => void;
 
-  onSelectRecentRoute: (routeId: number) => void;
+  onSelectRecentRoute: (routeId: string) => void;
 
   categories: Category[];
   onSaveCategoryColor: (id: string, color: PinColorKey) => void;
@@ -129,7 +127,10 @@ export default function Sidebar(props: SidebarProps) {
             <div className="flex flex-col gap-6">
               <div className="flex items-center gap-3">
                 <BackButton
-                  onClick={() => setSidebarMode({ type: "default" })}
+                  onClick={() => {
+                    setSidebarMode({ type: "default" });
+                    props.handleExitChosingRoute();
+                  }}
                 />
                 <h2 className="text-base font-semibold text-gray-800 dark:text-gray-200">
                   Zapisane trasy

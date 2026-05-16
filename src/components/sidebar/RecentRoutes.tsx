@@ -1,100 +1,100 @@
-import { useEffect, useState } from "react"
-import type { SavedRouteSummary } from "../../data/savedRouteSummary"
+import { useEffect, useState } from "react";
+import type { SavedRouteSummary } from "../../data/savedRouteSummary";
 
 interface RecentRoutesProps {
-  onSelectRoute: (index: number) => void
+  onSelectRoute: (index: string) => void;
 }
 
 export default function RecentRoutes({ onSelectRoute }: RecentRoutesProps) {
-  const [routes, setRoutes] = useState<SavedRouteSummary[]>()
-  const [isLoading, setIsLoading] = useState(true)
-  const [editingId, setEditingId] = useState<string | null>(null)
-  const [draftName, setDraftName] = useState("")
-  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
+  const [routes, setRoutes] = useState<SavedRouteSummary[]>();
+  const [isLoading, setIsLoading] = useState(true);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [draftName, setDraftName] = useState("");
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchRoutes = async () => {
       try {
-        const response = await fetch("/api/routes")
+        const response = await fetch("/api/routes");
 
         if (!response.ok) {
-          throw new Error("Błąd pobierania tras")
+          throw new Error("Błąd pobierania tras");
         }
 
-        const data = await response.json()
-        setRoutes(data)
+        const data = await response.json();
+        setRoutes(data);
       } catch (error) {
-        console.error("Nie udało się pobrać tras:", error)
+        console.error("Nie udało się pobrać tras:", error);
       } finally {
-        setIsLoading(false)
+        setIsLoading(false);
       }
-    }
+    };
 
-    fetchRoutes()
-  }, [])
+    fetchRoutes();
+  }, []);
 
   const startEdit = (route: SavedRouteSummary) => {
-    setEditingId(route.id)
-    setDraftName(route.name)
-  }
+    setEditingId(route.id);
+    setDraftName(route.name);
+  };
 
   const commitEdit = async () => {
-    if (editingId === null) return
+    if (editingId === null) return;
 
     try {
       await fetch(`/api/routes/${editingId}/saved`, {
         method: "PATCH",
         headers: {
-          "Content-Type": "application/json"
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          name: draftName
-        })
-      })
+          name: draftName,
+        }),
+      });
 
-      const response = await fetch("/api/routes")
+      const response = await fetch("/api/routes");
 
       if (!response.ok) {
-        throw new Error("Błąd pobierania tras")
+        throw new Error("Błąd pobierania tras");
       }
 
-      const data = await response.json()
-      setRoutes(data)
+      const data = await response.json();
+      setRoutes(data);
     } catch (error) {
-      console.error("Błąd usuwania trasy z bazy:", error)
+      console.error("Błąd usuwania trasy z bazy:", error);
     }
 
-    setEditingId(null)
-    setDraftName("")
-  }
+    setEditingId(null);
+    setDraftName("");
+  };
 
   const cancelEdit = () => {
-    setEditingId(null)
-    setDraftName("")
-  }
+    setEditingId(null);
+    setDraftName("");
+  };
 
   const confirmDelete = async (routeId: string) => {
-    setRoutes(prev => {
-      if (!prev) return []
-      prev.filter(r => r.id !== routeId)
-    })
-    setConfirmDeleteId(null)
+    setRoutes((prev) => {
+      if (!prev) return [];
+      prev.filter((r) => r.id !== routeId);
+    });
+    setConfirmDeleteId(null);
 
     try {
       await fetch(`/api/routes/${routeId}/saved`, {
-        method: "DELETE"
-      })
+        method: "DELETE",
+      });
     } catch (error) {
-      console.error("Błąd usuwania trasy z bazy:", error)
+      console.error("Błąd usuwania trasy z bazy:", error);
     }
-  }
+  };
 
   if (isLoading) {
     return (
       <div className="py-6 text-sm text-gray-500 dark:text-gray-400 animate-pulse">
         Ładowanie zapisanych tras...
       </div>
-    )
+    );
   }
 
   if (routes?.length === 0) {
@@ -102,7 +102,7 @@ export default function RecentRoutes({ onSelectRoute }: RecentRoutesProps) {
       <div className="py-6 text-sm text-gray-500 dark:text-gray-400">
         Brak zapisanych tras
       </div>
-    )
+    );
   }
 
   return (
@@ -110,6 +110,7 @@ export default function RecentRoutes({ onSelectRoute }: RecentRoutesProps) {
       {routes?.map((route, index) => (
         <div
           key={route.id}
+          onClick={() => onSelectRoute(route.id)}
           className="
             px-4 py-3
             rounded-xl
@@ -125,11 +126,11 @@ export default function RecentRoutes({ onSelectRoute }: RecentRoutesProps) {
                 <input
                   value={draftName}
                   autoFocus
-                  onChange={e => setDraftName(e.target.value)}
+                  onChange={(e) => setDraftName(e.target.value)}
                   onBlur={commitEdit}
-                  onKeyDown={e => {
-                    if (e.key === "Enter") commitEdit()
-                    if (e.key === "Escape") cancelEdit()
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") commitEdit();
+                    if (e.key === "Escape") cancelEdit();
                   }}
                   className="
                     w-full
@@ -142,7 +143,7 @@ export default function RecentRoutes({ onSelectRoute }: RecentRoutesProps) {
                 />
               ) : (
                 <span
-                  onClick={() => onSelectRoute(index)}
+                  onClick={() => onSelectRoute(route.id)}
                   className="text-sm font-medium text-gray-800 dark:text-gray-200 cursor-pointer"
                 >
                   {route.name}
@@ -168,7 +169,8 @@ export default function RecentRoutes({ onSelectRoute }: RecentRoutesProps) {
 
           {/* DÓŁ */}
           <div className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-            {Math.round(route.distance/1000)} km · {route.categories.join(", ")}
+            {Math.round(route.distance / 1000)} km ·{" "}
+            {route.categories.join(", ")}
           </div>
 
           {/* POTWIERDZENIE USUNIĘCIA */}
@@ -198,5 +200,5 @@ export default function RecentRoutes({ onSelectRoute }: RecentRoutesProps) {
         </div>
       ))}
     </div>
-  )
+  );
 }
